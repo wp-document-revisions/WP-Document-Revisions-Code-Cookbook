@@ -86,6 +86,9 @@ class WPDR_State_Permissions {
 
 	}
 	
+	/** 
+	 * Checks permission on document save
+	 */
 	function edit_document_perm_check( $user, $post ) {
 
 		if ( !$this->check_permission( $post->ID ) )		
@@ -95,6 +98,9 @@ class WPDR_State_Permissions {
 					
 	}
 	
+	/** 
+	 * Hides upload button, publish, etc. if user does not have proper permissions
+	 */
 	function hide_upload_button( ) {
 		global $post;
 		
@@ -106,6 +112,9 @@ class WPDR_State_Permissions {
 		
 	}
 	
+	/**
+	 *  Helper function to check permissions
+	 */
 	function check_permission( $postID ) {
 	
 		//get the terms in the taxonomy
