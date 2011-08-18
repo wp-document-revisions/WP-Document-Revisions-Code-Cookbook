@@ -32,9 +32,8 @@ function wpdr_decrypt( $postID, $file ) {
 	//alternately, can be done directly via shell
 	//`decrypt PASS < $file`
 	
-
 }
 
-add_action( 'serve_file', 'wpdr_decrypt' );
+add_action( 'serve_document', 'wpdr_decrypt' );
 
 ?>
