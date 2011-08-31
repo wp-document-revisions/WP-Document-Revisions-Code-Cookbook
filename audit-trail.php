@@ -49,18 +49,12 @@ function wpdr_get_downloads( $postID ) {
  * Parses standard WP revision history into an array for the audit trail
  */
 function wpdr_get_uploads( $postID ) {
-	
-	//get revisions and append the current post to the top
 	global $post;
-	$revisions = wp_get_post_revisions( $post->ID );
-	
-	//fix for post date
-	$post->post_date = date( 'Y-m-d H:i:s', get_the_modified_time( 'U' ) );
-		
-	//include currrent version in the revision list	
-	array_unshift( $revisions, $post );
-	
 	$uplaods = array();
+
+	//get revisions using our internal function
+	$wpdr = Document_Revisions::$instance;
+	$revisions = $wpdr->get_revisions( $post->ID );
 	
 	//loop through and build an array	
 	foreach ( $revisions as $revision )
