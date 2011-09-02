@@ -46,4 +46,4 @@ function wpdr_shotcode( $atts ) {
 	return $output;
 }
 
-add_shortcode( 'reisions', 'wpdr_shortcode' );
+add_shortcode( 'revisions', 'wpdr_shortcode' );
