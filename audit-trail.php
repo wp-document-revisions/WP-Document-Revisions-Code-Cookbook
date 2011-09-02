@@ -50,7 +50,7 @@ function wpdr_get_downloads( $postID ) {
  */
 function wpdr_get_uploads( $postID ) {
 	global $post;
-	$uplaods = array();
+	$uploads = array();
 
 	//get revisions using our internal function
 	$wpdr = Document_Revisions::$instance;
@@ -79,12 +79,9 @@ function wpdr_log_download( $postID ) {
 	if ( $parent = wp_is_post_revision( $postID ) )
 		$postID = $parent;
 	
-	//get the current user 
-	$user = wp_get_current_user();
-	
 	//format data array
 	$data = array( 	'timestamp' => current_time( 'mysql' ), 
-					'user' => $user->ID, 
+					'user' => get_current_user_id(),
 					'action' => 'Check Out' 
 					);
 	
@@ -132,7 +129,7 @@ function wpdr_audit_metabox( $post ) {
 		?>
 		<tr>
 			<td><abbr class="timestamp" title="<?php echo $event['timestamp']; ?>" id="<?php echo strtotime( $event['timestamp'] ); ?>"><?php echo human_time_diff( strtotime( $event['timestamp'] ), current_time( 'timestamp' ) ); ?></abbr> ago</td>
-			<td><?php echo $user->display_name; ?></td>
+			<td><?php echo esc_html( $user->display_name ); ?></td>
 			<td><?php echo $event['action']; ?></td>
 		</tr>
 	<?php } ?>
