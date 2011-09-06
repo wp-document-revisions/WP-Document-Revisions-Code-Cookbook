@@ -6,3 +6,4 @@ Sample code to help customize WP Document Revisions.
 1. **Rename Documents** - changes all references to "Documents" in the interface to any label of your choosing
 1. **State Change Notification** - how to use document api to allow the author to receive notification whenever his or her document changes workflow states
 1. **Bulk Import** - how to batch import a directory (or other list) of files as documents
+1. **Recently Revised Widget** - example of how to list recently revised documents in a widget
