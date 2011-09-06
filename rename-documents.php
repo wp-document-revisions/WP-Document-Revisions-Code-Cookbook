@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: WP Document Revisions - Rename Documents Label
-Plugin URI: 
+Plugin URI: https://github.com/benbalter/WP-Document-Revisions-Code-Cookbook
 Description: Example code to change the "Documents" labels used throughout the plugin to something else such as "articles" or "reports"
 Version: 0.1
 Author: Benjamin J. Balter

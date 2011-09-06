@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: WP Document Revisions - Audit Trail Code Sample
-Plugin URI: http://
+Plugin URI: https://github.com/benbalter/WP-Document-Revisions-Code-Cookbook
 Description: Code sample to demonstrate check-in/check-out audit trail functionality
 Version: 1.0
 Author: Benjamin J. Balter

@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: WP Document Revisions - State Change Notifications
-Plugin URI: http://
+Plugin URI: https://github.com/benbalter/WP-Document-Revisions-Code-Cookbook
 Description: Code sample to demonstrate automated notifications on document workflow state change
 Version: 1.0
 Author: Benjamin J. Balter

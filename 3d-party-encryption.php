@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: WP Document Revisions - State Permission Code Sample
-Plugin URI: http://
+Plugin URI: https://github.com/benbalter/WP-Document-Revisions-Code-Cookbook
 Description: Code sample to demonstrate third-party resting encryption on file upload / download
 Version: 1.0
 Author: Benjamin J. Balter

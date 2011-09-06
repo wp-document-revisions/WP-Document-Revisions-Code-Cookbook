@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: WP Document Revisions - State Permission Code Sample
-Plugin URI: http://
+Plugin URI: https://github.com/benbalter/WP-Document-Revisions-Code-Cookbook
 Description: Code sample to demonstrate state-level permissions based on a custom taxonomy
 Version: 1.0
 Author: Benjamin J. Balter
