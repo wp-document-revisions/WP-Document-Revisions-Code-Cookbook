@@ -34,4 +34,4 @@ function wpdr_update_type( $postID ) {
 	wp_set_post_terms( $postID, array( $wpdr->get_extension( $postID ) ), 'filetype', false );
 }
 
-add_action( 'save_post', 'wpdr_update_type' );
+add_action( 'save_post', 'wpdr_update_type', 10, 1 );
