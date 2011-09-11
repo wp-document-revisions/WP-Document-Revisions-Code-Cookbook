@@ -20,9 +20,9 @@ class WPDR_State_Permissions {
 	function __construct() {
 		add_action( 'init', array( &$this, 'add_caps' ), 20 );
 		add_action( 'serve_document', array( &$this, 'serve_file_perm_check' ), 1, 1 );
-		add_action( 'save_post', array( &$this, 'save_post_perm_check' ), 1, 1 );
+		add_action( 'pre_post_update', array( &$this, 'save_post_perm_check' ), 1, 1 );
 		add_action( 'admin_head', array( &$this, 'hide_upload_button') );
-		add_filter( 'document_lock_check', array( &$this, 'edit_document_perm_check' ) );
+		add_filter( 'document_lock_check', array( &$this, 'edit_document_perm_check' ), 1, 2 );
 	}
 	
 	/**
@@ -66,7 +66,7 @@ class WPDR_State_Permissions {
 	 */
 	function serve_file_perm_check( $postID ) {
 		
-		if ( !$this->check_permission( $postID ) )		
+		if ( !$this->check_permission( $postID, 'read' ) )		
 			wp_die( 'You do not have sufficient permissions to do that' );
 		
 	}
@@ -81,7 +81,7 @@ class WPDR_State_Permissions {
 		if ( $post->post_type != 'document' )
 			return;
 	
-		if ( !$this->check_permission( $postID ) )		
+		if ( !$this->check_permission( $postID, 'edit' ) )		
 			wp_die( 'You do not have sufficient permissions to do that' );
 
 	}
@@ -91,7 +91,7 @@ class WPDR_State_Permissions {
 	 */
 	function edit_document_perm_check( $user, $post ) {
 
-		if ( !$this->check_permission( $post->ID ) )		
+		if ( !$this->check_permission( $post->ID, 'edit' ) )		
 			return false;
 		
 		return $user;
@@ -104,10 +104,10 @@ class WPDR_State_Permissions {
 	function hide_upload_button( ) {
 		global $post;
 		
-		if ( $post->post_type != 'document' )
+		if ( !$post || $post->post_type != 'document' )
 			return;
 		
-		if ( !$this->check_permission( $post->ID ) )
+		if ( !$this->check_permission( $post->ID, 'edit' )  )
 			echo "<style>#publish, #add_media, #lock-notice {display: none;}</style>";		
 		
 	}
@@ -115,7 +115,7 @@ class WPDR_State_Permissions {
 	/**
 	 *  Helper function to check permissions
 	 */
-	function check_permission( $postID ) {
+	function check_permission( $postID, $action ) {
 	
 		//get the terms in the taxonomy
 		$terms = wp_get_post_terms( $postID, $this->taxonomy );
@@ -125,7 +125,7 @@ class WPDR_State_Permissions {
 			return true;
 		
 		//check permission and die if necessary
-		if ( !current_user_can( 'edit_documents_in_' . $terms[0]->slug ) )
+		if ( !current_user_can( $action . '_documents_in_' . $terms[0]->slug ) )
 			return false;
 		
 		return true;
