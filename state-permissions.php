@@ -52,9 +52,11 @@ class WPDR_State_Permissions {
 			foreach ( $terms as $term ) {
 
 				//loop through each cap and assign
-				foreach ( $caps as $cap=>$grant )				
-					$wp_roles->add_cap( $role, $cap . '_in_' . $term->slug, $grant );
-		
+				foreach ( $caps as $cap=>$grant ) {			
+					if ( !isset( $wp_roles->roles[$role]['capabilities'][$cap] ) )	
+						$wp_roles->add_cap( $role, $cap . '_in_' . $term->slug, $grant );
+				}
+						
 			}
 			
 		}

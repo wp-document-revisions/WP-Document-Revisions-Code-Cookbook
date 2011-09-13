@@ -18,6 +18,8 @@ class wpdr_recently_revised_widget extends WP_Widget class wpdr_recently_revised
 	
 	function widget( $args, $instance ) {
 		
+		$wpdr = Document_Revisions::$instance;
+		
 		extract( $args );
  		
  		echo $before_widget; 
@@ -26,7 +28,7 @@ class wpdr_recently_revised_widget extends WP_Widget class wpdr_recently_revised
 		
 		$query = array( 
 				'post_type' => 'document',
-				'orderby' => 'post_date',
+				'orderby' => 'modified',
 				'order' => 'DESC',
 				'numberposts' => '5',
 				'post_status' => array( 'private', 'publish', 'draft' ),
@@ -35,9 +37,14 @@ class wpdr_recently_revised_widget extends WP_Widget class wpdr_recently_revised
 		$documents = get_posts( $query );
 
 		echo "<ul>\n";
-		foreach ( $documents as $document ) { ?>
-			<li><a href="<?php echo get_permalink( $document->ID ); ?>"><?php echo $document->post_title; ?></a><br />
-			Revised <?php echo human_time_diff( strtotime( $document->post_modified ) ); ?> ago by <?php echo  get_the_author_meta( 'display_name', $document->post_author ); ?>
+		foreach ( $documents as $document ) {
+		 
+			//use our function to get post data to correct WP's author bug
+			$revision = $wpdr->get_latest_revision( $document->ID );
+
+		?>
+			<li><a href="<?php echo get_edit_post_link( $revision->ID ); ?>"><?php echo $revision->post_title; ?></a><br />
+			<?php echo human_time_diff( strtotime( $revision->post_modified_gmt ) ); ?> ago by <?php echo  get_the_author_meta( 'display_name', $revision->post_author ); ?>
 			</li>
 		<?php }
 		
