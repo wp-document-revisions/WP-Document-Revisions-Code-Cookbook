@@ -12,11 +12,12 @@ License: GPL2
 class wpdr_track_meta_changes {
 
 	public $document_change_list = array();
-
+	public $wpdr;
+	
 	function __construct() {
 		
-		//makes all WPDR functions accessible as $this->wpdr->{function}
-		$this->wpdr = &Document_Revisions::$instance;
+		//set up class	
+		add_action( 'plugins_loaded', array( &$this, 'setup_wpdr' ) );
 		
 		//taxs
 		add_action( 'set_object_terms', array( &$this, 'build_taxonomy_change_list' ), 10, 6 );
@@ -30,6 +31,13 @@ class wpdr_track_meta_changes {
 		//appending
 		add_action( 'save_post', array( &$this, 'append_changes_to_revision_summary' ), 20, 1 );
 	
+	}
+	/**
+	 * Makes all WPDR functions accessible as $this->wpdr->{function}	
+	 * Call here so that Doc Revs is loaded
+	 */
+	function setup_wpdr() {
+		$this->wpdr = &Document_Revisions::$instance;
 	}
 	
 	/**
