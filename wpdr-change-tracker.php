@@ -16,7 +16,7 @@ class wpdr_track_meta_changes {
 	function __construct() {
 		
 		//makes all WPDR functions accessible as $this->wpdr->{function}
-		$this->wpdr = Document_Revisions::$instance;
+		$this->wpdr = &Document_Revisions::$instance;
 		
 		//taxs
 		add_action( 'set_object_terms', array( &$this, 'build_taxonomy_change_list' ), 10, 6 );
