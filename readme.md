@@ -8,4 +8,5 @@ Sample code to help customize WP Document Revisions.
 1. **Bulk Import** - how to batch import a directory (or other list) of files as documents
 1. **Recently Revised Widget** - example of how to list recently revised documents in a widget
 1. **Filetype Taxonomy** - Adds support to filter by filetype
-1. **Change Tracker** - Auto-generates and appends revision summaries for changes to taxonomies, title, and visibility
+1. **Change Tracker** - Auto-generates and appends revision summaries for changes to taxonomies, title, and visibility'
+1. **Remove Workflow States** - Completely removes Workflow state taxonomy backend and UI
