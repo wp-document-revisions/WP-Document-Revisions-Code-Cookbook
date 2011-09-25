@@ -1,8 +1,9 @@
 <?php
 /*
-Plugin Name: Remove Workflow State
+Plugin Name: WP Document Revisions - Remove Workflow State
 Plugin URI: https://github.com/benbalter/WP-Document-Revisions-Code-Cookbook
 Description: Removes Workflow State Taxonomy from Documents
+Version: 1.0
 Author: Benjamin J. Balter
 Author URI: http://ben.balter.com
 License: GPL2
