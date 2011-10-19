@@ -13,4 +13,4 @@ Sample code to help customize WP Document Revisions.
 1. **Revision Shortcode** - Code sample to demonstrate short code to list revisions
 1. **Change Tracker** - Auto-generates and appends revision summaries for changes to taxonomies, title, and visibility
 
-*See also*, the [full set up custom plugins used](chttps://github.com/benbalter/PCLJ-Members-Workspace) to power a peer reviewed scholarly publication's workflow.
+*See also*, the [full set up custom plugins used](https://github.com/benbalter/PCLJ-Members-Workspace) to power a peer reviewed scholarly publication's workflow.
