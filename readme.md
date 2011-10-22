@@ -1,4 +1,4 @@
-Sample code to help customize WP Document Revisions.
+Sample code to help customize WP Document Revisions. Once adapted to your organizations needs the files in the cookbook should be dropped into your /wp-content/plugins/ directory (or a sub-directory thereof) and activated like any plugin would.
 
 1. **Audit Trail** - creates check in / check out audit trail
 1. **State Permissions** - allows setting user level permissions based on a custom taxonomy such as workflow state or other document status
