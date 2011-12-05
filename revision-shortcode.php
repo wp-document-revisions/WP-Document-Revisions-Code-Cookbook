@@ -11,7 +11,7 @@ License: GPL2
 
 /**
  *
- * NOTE: An updated version of this widget is now included with WP Document Revisions by default
+ * NOTE: An updated version of this shortcode is now included with WP Document Revisions by default
  * As a result, this file is no longer maintained
  *
  */
