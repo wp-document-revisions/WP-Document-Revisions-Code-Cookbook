@@ -9,6 +9,13 @@ Author URI: http://ben.balter.com
 License: GPL2
 */
 
+/**
+ *
+ * NOTE: An updated version of this functionality is now included with WP Document Revisions by default
+ * As a result, this file is no longer maintained
+ *
+ */
+
 
 function wpdr_ef_cpt_filter( $cpt ) {
 
