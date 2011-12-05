@@ -9,7 +9,15 @@ Author URI: http://ben.balter.com
 License: GPL2
 */
 
-class wpdr_recently_revised_widget extends WP_Widget class wpdr_recently_revised_documents extends WP_Widget {
+
+/**
+ *
+ * NOTE: An updated version of this widget is now included with WP Document Revisions by default
+ * As a result, this file is no longer maintained
+ *
+ */
+
+class wpdr_recently_revised_widget extends WP_Widget {
 
 	function __construct() {
 		parent::WP_Widget( 'wpdr_recently_revised_documents', $name = 'Recently Revised Documents' );
