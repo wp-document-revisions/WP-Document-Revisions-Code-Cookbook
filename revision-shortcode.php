@@ -10,6 +10,13 @@ License: GPL2
 */
 
 /**
+ *
+ * NOTE: An updated version of this widget is now included with WP Document Revisions by default
+ * As a result, this file is no longer maintained
+ *
+ */
+
+/**
  * Callback to display revisions
  * @param $atts array attributes passed via short code
  * @returns string a UL with the revisions
