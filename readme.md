@@ -11,6 +11,7 @@ Sample code to help customize WP Document Revisions. Once adapted to your organi
 1. **State Permissions** - allows setting user level permissions based on a custom taxonomy such as workflow state or other document status
 whenever his or her document changes workflow states
 1. **Change Tracker** - Auto-generates and appends revision summaries for changes to taxonomies, title, and visibility'
+1. **Network Admin** - Provides interface to set document upload directory when plugin is not network activated on multisite installs
 
 Code Cookbook Alumni (Deprecated functions now included with the plugin by default):
 
