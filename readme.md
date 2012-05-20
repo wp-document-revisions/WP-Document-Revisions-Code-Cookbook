@@ -10,9 +10,8 @@ Sample code to help customize WP Document Revisions. Once adapted to your organi
 1. **Remove Date from Permalink** - Remove the automatically prepended `/yyyy/mm/` from document links
 1. **Remove Workflow States** - Completely removes Workflow state taxonomy backend and UI
 1. **Rename Documents** - changes all references to "Documents" in the interface to any label of your choosing
-1. **State Change Notification** - how to use document api to allow the author to receive notification 
-1. **State Permissions** - allows setting user level permissions based on a custom taxonomy such as workflow state or other document status
-whenever his or her document changes workflow states
+1. **State Change Notification** - how to use document api to allow the author to receive notification whenever his or her document changes workflow states 
+1. **Taxonomy Permissions** - allows setting user-level permissions and access control based on document being in a given workflow state or other custom taxonomy such as department
 
 Code Cookbook Alumni (Deprecated functions now included with the plugin by default):
 
