@@ -15,14 +15,14 @@ This example will import all files of specified filetype in a given directory as
 //relative or absolute path to wp-load.php (WordPress root)
 $wp_load_php = '../../wp-load.php';
 
-//directory to parse for files
-$import_directory = '/Users/ben/projects/cookbook/';
+//relative or absolute path of directory to parse for files
+$import_directory = '/var/www/public_html/documents/';
 
 //type of file to import
-$extension = 'php';
+$extension = 'pdf';
 
 //initial revision log message (optional)
-$revision_message = 'import';
+$revision_message = 'Automated import';
 
 //id of author to associate with documents, must be valid
 $author = '1';
