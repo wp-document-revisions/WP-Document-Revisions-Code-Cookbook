@@ -34,6 +34,11 @@ function wpdr_remove_workflow_metabox() {
 	remove_meta_box('workflow-state', 'document','side');
 }
 
+function wpdr_remove_workflow_menu_subpage() {
+	remove_submenu_page('edit.php?post_type=document','edit-tags.php?taxonomy=workflow_state&amp;post_type=document');
+}
+
 add_action( 'plugins_loaded', 'wpdr_remove_workflow_init_hooks' );
 add_action( 'admin_init', 'wpdr_remove_workflow_admin_hooks', 0);
 add_action( 'document_edit', 'wpdr_remove_workflow_metabox' );
+add_action( 'admin_menu', 'wpdr_remove_workflow_menu_subpage' );
