@@ -31,7 +31,11 @@ function wpdr_update_type( $postID ) {
 	if ( !$wpdr->verify_post_type( $postID ) )
 		return;
 		
-	wp_set_post_terms( $postID, array( $wpdr->get_extension( $postID ) ), 'filetype', false );
+	$post = get_post( $postID );
+	$attachment = get_post( $post->post_content );
+	$extensions = array( $wpdr->get_extension( get_attached_file( $attachment->ID ) ) ) ;
+	
+	wp_set_post_terms( $postID, $extensions, 'filetype', false );
 }
 
 add_action( 'save_post', 'wpdr_update_type', 10, 1 );
