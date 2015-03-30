@@ -173,6 +173,9 @@ class wpdr_track_meta_changes {
 		//manually update the DB here so that we don't create another revision
 		$wpdb->update( $wpdb->posts, array( 'post_excerpt' => $message ), array( 'ID' => $postID ), '%s', '%d' );
 		
+		if($r = $wpdb->get_results("SELECT ID FROM ".$wpdb->posts." WHERE post_parent='$postID' AND post_type='revision' ORDER BY ID DESC LIMIT 1;"))
+			$wpdb->update( $wpdb->posts, array( 'post_excerpt' => $message ), array( 'ID' => $r[0]->ID ), '%s', '%d' );
+		
 		do_action( 'document_meta_change', $postID, $message );
 		
 		//reset in case another post is also being saved for some reason
