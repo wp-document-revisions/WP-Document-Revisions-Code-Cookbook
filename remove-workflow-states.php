@@ -23,7 +23,7 @@ function wpdr_remove_workflow_admin_hooks() {
 	if ( !class_exists( 'WP_Document_Revisions_Admin' ) )
 		return;
 
-	$wpdra = WP_Document_Revisions_Admin::$instance->admin;
+	$wpdra = WP_Document_Revisions_Admin::$instance;
 	remove_filter( 'manage_edit-document_columns', array( &$wpdra, 'add_workflow_state_column' ) );
 	remove_action( 'manage_document_posts_custom_column', array( &$wpdra, 'workflow_state_column_cb' ) );
 	remove_action( 'save_post', array( &$wpdra, 'workflow_state_save' ) );
