@@ -1,222 +1,298 @@
 <?php
-/*
+/**
 Plugin Name: WP Document Revisions - Track Changes to Document Metadata
-Plugin URI: 
+Plugin URI:
 Description: Auto-generates and appends revision summaries for changes to taxonomies, title, and visibility
 Version: 0.1
 Author: Benjamin J. Balter
 Author URI: http://ben.balter.com
 License: GPL2
-*/
+ *
+ * @package WP Document Revisions Code Cookbook
+ */
 
-class wpdr_track_meta_changes {
-
+/**
+ * Main WP_Document_Revisions Track class.
+ */
+class WPDR_Track_Meta_Changes {
+	/**
+	 * Change List.
+	 *
+	 * @var array $document_change_list
+	 */
 	public $document_change_list = array();
+
+	/**
+	 * WPDR Class.
+	 *
+	 * @var object Class
+	 */
 	public $wpdr;
-	
-	function __construct() {
-		
-		//set up class	
+
+	/**
+	 * Construct
+	 */
+	public function __construct() {
+
+		// set up class.
 		add_action( 'plugins_loaded', array( &$this, 'setup_wpdr' ) );
-		
-		//taxs
+
+		// taxs.
 		add_action( 'set_object_terms', array( &$this, 'build_taxonomy_change_list' ), 10, 6 );
-		
-		//status
-		add_action( 'transition_post_status', array( &$this, 'track_status_changes' ), 10, 3);
 
-		//title
-		add_action( 'save_post', array( &$this, 'track_title_changes' ), 10, 1 );
+		// status.
+		add_action( 'transition_post_status', array( &$this, 'track_status_changes' ), 10, 3 );
 
-		//appending
-		add_action( 'save_post', array( &$this, 'append_changes_to_revision_summary' ), 20, 1 );
-	
+		// title.
+		add_action( 'save_post_document', array( &$this, 'track_title_changes' ), 10, 1 );
+
+		// appending.
+		add_action( 'save_post_document', array( &$this, 'append_changes_to_revision_summary' ), 20, 1 );
+
 	}
 	/**
-	 * Makes all WPDR functions accessible as $this->wpdr->{function}	
+	 * Makes all WPDR functions accessible as $this->wpdr->{function}
 	 * Call here so that Doc Revs is loaded
 	 */
-	function setup_wpdr() {
-		$this->wpdr = &Document_Revisions::$instance;
+	public function setup_wpdr() {
+		// ensure WP Document Revisions is loaded.
+		if ( ! class_exists( 'WP_Document_Revisions' ) ) {
+			return;
+		}
+		$this->wpdr = WP_Document_Revisions::$instance;
 	}
-	
+
 	/**
 	 * Compares post title to previous revisions post title and adds to internal array if changed
-	 * @param int $postID the id of the post to check
+	 *
+	 * @param int $post_ID the id of the post to check.
 	 */
-	function track_title_changes( $postID ) {
-		
-		if ( $this->dont_track( $postID ) )
+	public function track_title_changes( $post_ID ) {
+
+		if ( $this->dont_track( $post_ID ) ) {
 			return false;
-		
-		$new = get_post( $postID );
-		$revisions = $this->wpdr->get_revisions( $postID );
-		
-		//because we've already saved, [0] = this one, [1] = the previous one
+		}
+
+		$new       = get_post( $post_ID );
+		$revisions = $this->wpdr->get_revisions( $post_ID );
+
+		// because we've already saved, [0] = this one, [1] = the previous one.
 		$old = $revisions[1];
-		
-		if ( $new->post_title == $old->post_title )
+
+		if ( $new->post_title === $old->post_title ) {
 			return;
-		
-		do_action( 'document_title_changed', $postID, $old, $new );
-		
-		$this->document_change_list[] = sprintf( __( 'Title changed from "%1$s" to "%2$s"', 'wp_document_revisions'), $old->post_title, $new->post_title );
-		
+		}
+
+		do_action( 'document_title_changed', $post_ID, $old, $new );
+
+		// translators: %1$s is the old title,  %2$s is the new title.
+		$this->document_change_list[] = sprintf( __( 'Title changed from "%1$s" to "%2$s"', 'wp_document_revisions' ), $old->post_title, $new->post_title );
+
 	}
-	
+
 	/**
 	 * Tracks when a post status changes
-	 * @param string $new the new status
-	 * @param string $old the old status
-	 * @param object $post the post object
+	 *
+	 * @param string $new the new status.
+	 * @param string $old the old status.
+	 * @param object $post the post object.
 	 */
-	function track_status_changes( $new, $old, $post ) {
-		
-		if ( $this->dont_track( $post->ID ) )
-			return false;	
-	
-		if ( $old == 'new' || $old == 'auto_draft' )
+	public function track_status_changes( $new, $old, $post ) {
+
+		if ( $this->dont_track( $post->ID ) ) {
 			return false;
-			
-		if ( $new == $old )
+		}
+
+		if ( 'new' === $old || 'auto_draft' === $old ) {
 			return false;
-		
+		}
+
+		if ( $new === $old ) {
+			return false;
+		}
+
 		do_action( 'document_visibility_changed', $post->ID, $old, $new );
-		
-		$this->document_change_list[] = sprintf( __( 'Visibility changed from "%1$s" to "%2$s"', 'wp_document_revisions'), $old, $new );
-		
+
+		// translators: %1$s is the old status,  %2$s is the new status.
+		$this->document_change_list[] = sprintf( __( 'Visibility changed from "%1$s" to "%2$s"', 'wp_document_revisions' ), $old, $new );
+
 	}
 
 	/**
 	 * Tracks changes to taxonomies
-	 * @param int $object_id the document ID
-	 * @param array $terms the new terms
-	 * @param array $tt_ids the new term IDs
-	 * @param string $taxonomy the taxonomy being changed
-	 * @param bool $append whether it is being appended or replaced
-	 * @param array $old_tt_ids term taxonomy ID array before the change
+	 *
+	 * @param int    $object_id the document ID.
+	 * @param array  $terms the new terms.
+	 * @param array  $tt_ids the new term IDs.
+	 * @param string $taxonomy the taxonomy being changed.
+	 * @param bool   $append whether it is being appended or replaced.
+	 * @param array  $old_tt_ids term taxonomy ID array before the change.
 	 */
-	function build_taxonomy_change_list( $object_id, $terms, $tt_ids, $taxonomy, $append, $old_tt_ids) {
-		
-		if ( $this->dont_track( $object_id ) )
+	public function build_taxonomy_change_list( $object_id, $terms, $tt_ids, $taxonomy, $append, $old_tt_ids ) {
+
+		if ( $this->dont_track( $object_id ) ) {
 			return false;
-		
-		//no changes were made
-		if ( $append == false && !$this->taxonomy_changed( $tt_ids, $old_tt_ids ) )
-			return false;
-		
-		$removed = false;
-		
-		//something was removed
-		if ( sizeof( $old_tt_ids ) > sizeof( $tt_ids ) ) {
-			$removed = true;
-			$tt_ids = array_diff( $old_tt_ids, $tt_ids );
-		}
-				
-		$taxonomy = get_taxonomy( $taxonomy );
-		$terms_formatted = array();
-		
-		//format terms into comma separated list of terms with quotes
-		foreach ( $tt_ids as $term ) {
-			$term_obj = get_term_by('id', $term, $taxonomy->name);
-			$terms_formatted[] = '"' . $term_obj->name . '"';
 		}
 
-		//human format the string by adding an "and" before the last term
-    	$last = array_pop ( $terms_formatted ); 
-    	if ( !count( $terms_formatted) ) 
-        	$terms_formatted = $last;
-		else 
-	    	$terms_formatted = implode (', ', $terms_formatted ) . ' and ' . $last; 
+		// Added terms are specified terms, that did not already exist.
+		$added_tt_ids = array_diff( $tt_ids, $old_tt_ids );
 
-		//grab the proper taxonomy label
-		$taxonomy_formatted = ( sizeof( $tt_ids )  == 1) ? $taxonomy->labels->singular_name : $taxonomy->labels->name;
-		
 		if ( $append ) {
-			$message = sprintf( __( '%1$s %2$s added', 'wp_document_revisions' ), $taxonomy_formatted, $terms_formatted );
-		} else if ( $removed ) {
-			$message = sprintf( __( '%1$s %2$s removed', 'wp_document_revisions' ), $taxonomy_formatted, $terms_formatted );
+			// If appending terms - nothing was removed.
+			$removed_tt_ids = array();
 		} else {
-			$message = sprintf( __( '%1$s changed to %2$s', 'wp_document_revisions' ), $taxonomy_formatted, $terms_formatted );
+			// Removed terms will be old terms, that were not specified in $tt_ids.
+			$removed_tt_ids = array_diff( $old_tt_ids, $tt_ids );
 		}
-		
+
+		$taxonomy = get_taxonomy( $taxonomy );
+
+		// grab the proper taxonomy label.
+		$taxonomy_formatted = ( count( $added_tt_ids ) + count( $removed_tt_ids ) === 1 ) ? $taxonomy->labels->singular_name : $taxonomy->labels->name;
+		$add                = '';
+		$sep                = '';
+		$rem                = '';
+		// Deal with added ones.
+		if ( ! empty( $added_tt_ids ) ) {
+			// These are taxonomy term IDs so need to get names from term_ids.
+			$terms_fmt = array();
+			foreach ( $added_tt_ids as $term ) {
+				$term_obj    = get_term_by( 'term_taxonomy_id', $term, $taxonomy );
+				$terms_fmt[] = '"' . $term_obj->name . '"';
+			}
+
+			// human format the string by adding an "and" before the last term.
+			$last = array_pop( $terms_fmt );
+			if ( ! count( $terms_fmt ) ) {
+				$terms_formatted = $last;
+			} else {
+				$terms_formatted = implode( ', ', $terms_fmt ) . __( ' and ', 'wp_document_revisions' ) . $last;
+			}
+
+			// translators: %1$s is the list of terms added.
+			$add = sprintf( __( ' %1$s added', 'wp_document_revisions' ), $terms_formatted );
+
+			if ( ! empty( $removed_tt_ids ) ) {
+				// translators: separator between added and removed..
+				$sep = __( ',', 'wp_document_revisions' );
+			}
+		}
+
+		// Deal with removed ones.
+		if ( ! empty( $removed_tt_ids ) ) {
+			// These are taxonomy term IDs so need to get names from term_ids.
+			$terms_fmt = array();
+			foreach ( $removed_tt_ids as $term ) {
+				$term_obj    = get_term_by( 'term_taxonomy_id', $term, $taxonomy );
+				$terms_fmt[] = '"' . $term_obj->name . '"';
+			}
+
+			// human format the string by adding an "and" before the last term.
+			$last = array_pop( $terms_fmt );
+			if ( ! count( $terms_fmt ) ) {
+				$terms_formatted = $last;
+			} else {
+				$terms_formatted = implode( ', ', $terms_fmt ) . __( ' and ', 'wp_document_revisions' ) . $last;
+			}
+
+			// translators: %1$s is the list of terms removed.
+			$rem = sprintf( __( ' %1$s removed', 'wp_document_revisions' ), $terms_formatted );
+		}
+
+		if ( '' !== $add || '' !== $rem ) {
+			// translators: %1$s is the taxonomy's name,  %2$s is the list of terms added,  %3$s is the separator,  %3$s is the list of terms removed.
+			$message = sprintf( __( '%1$s:%2$s%3$s%4$s', 'wp_document_revisions' ), $taxonomy_formatted, $add, $sep, $rem );
+
+			$this->document_change_list[] = $message;
+		}
+
 		do_action( 'document_taxonomy_changed', $object_id, $taxonomy->name, $tt_ids, $old_tt_ids );
-		
-		$this->document_change_list[] = $message;		
-		
 	}
-	
+
 	/**
 	 * Loops through document change list and appends to latest revisions's log message
-	 * @param int $postID the ID of the document being changed
+	 *
+	 * @param int $post_ID the ID of the document being changed.
 	 */
-	function append_changes_to_revision_summary( $postID ) {
+	public function append_changes_to_revision_summary( $post_ID ) {
 		global $wpdb;
-		
-		if ( $this->dont_track( $postID ) )
+
+		if ( $this->dont_track( $post_ID ) ) {
 			return false;
-			
-		if ( empty( $this->document_change_list ) )
+		}
+
+		if ( empty( $this->document_change_list ) ) {
 			return false;
-			
-		$post = get_post( $postID );
+		}
+
+		$post    = get_post( $post_ID );
 		$message = trim( $post->post_excerpt );
-		
-		if ( !empty( $message ) && substr( $message, -1, 1 ) != ' ' ) 	
+
+		if ( ! empty( $message ) && ' ' !== substr( $message, -1, 1 ) ) {
 			$message .= ' ';
-		
-		//escape HTML and implode list on semi-colons
-		$this->document_change_list = esc_html( stripslashes( implode( '; ', $this->document_change_list ) ) );
-		$message .= '(' . $this->document_change_list . ')';
-		$message = apply_filters( 'document_revision_log_auto_append_message', $message, $postID );
-		
-		//manually update the DB here so that we don't create another revision
-		$wpdb->update( $wpdb->posts, array( 'post_excerpt' => $message ), array( 'ID' => $postID ), '%s', '%d' );
-		
-		if($r = $wpdb->get_results("SELECT ID FROM ".$wpdb->posts." WHERE post_parent='$postID' AND post_type='revision' ORDER BY ID DESC LIMIT 1;"))
-			$wpdb->update( $wpdb->posts, array( 'post_excerpt' => $message ), array( 'ID' => $r[0]->ID ), '%s', '%d' );
-		
-		do_action( 'document_meta_change', $postID, $message );
-		
-		//reset in case another post is also being saved for some reason
+		}
+
+		// escape HTML and implode list on semi-colons.
+		$change_list = esc_html( stripslashes( implode( '; ', $this->document_change_list ) ) );
+		$message    .= '(' . $change_list . ')';
+		$message     = apply_filters( 'document_revision_log_auto_append_message', $message, $post_ID );
+
+		// manually update the DB here so that we don't create another revision.
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery
+		$wpdb->update( $wpdb->posts, array( 'post_excerpt' => $message ), array( 'ID' => $post_ID ), '%s', '%d' );
+
+		// need to clean the cache.
+		clean_post_cache( $post_ID );
+
+		$r = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT MAX(ID) FROM ' . $wpdb->posts . " WHERE post_parent=%d AND post_type='revision';",
+				$post_ID
+			)
+		);
+
+		if ( ! is_null( $r ) ) {
+			$wpdb->update( $wpdb->posts, array( 'post_excerpt' => $message ), array( 'ID' => $r ), '%s', '%d' );
+		}
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery
+
+		// clear WPDR revision cache.
+		wp_cache_delete( $post_ID, 'document_revisions' );
+
+		do_action( 'document_meta_change', $post_ID, $message );
+
+		// reset in case another post is also being saved for some reason.
 		$this->document_change_list = array();
-		
+
 	}
-	
+
 	/**
-	 * Helper function to compare to taxonomy arrays and determine if they are the same regardless of order
-	 * @param array $a 1st array
-	 * @param array $b 2nd array
-	 * @returns bool true if changed, false if unchanged
-	 * from: php.net
-	 */
-	function taxonomy_changed($a, $b) {
-    	return !(is_array($a) && is_array($b) && array_diff($a, $b) === array_diff($b, $a) );
-	}
-	
-	/** 
 	 * Determines whether changes should be tracked for a given post
-	 * @param int $postID the ID of the post
+	 *
+	 * @param int $post_ID the ID of the post.
 	 * @returns bool true if shouldn't track, otherwise false
 	 */
-	function dont_track( $postID ) {
-	
-		if ( !apply_filters( 'track_document_meta_changes', true ) )
+	private function dont_track( $post_ID ) {
+		if ( ! apply_filters( 'track_document_meta_changes', true, $post_ID ) ) {
 			return true;
-			
-		if ( wp_is_post_revision( $postID ) )
-			return true;
-		
-		if ( !$this->wpdr->verify_post_type( $postID ) ) 
-			return true;
+		}
 
-		$revisions = $this->wpdr->get_revisions( $postID );
-		if ( sizeof( $revisions ) <= 1 )
+		if ( wp_is_post_revision( $post_ID ) ) {
 			return true;
-			
+		}
+
+		if ( ! $this->wpdr->verify_post_type( $post_ID ) ) {
+			return true;
+		}
+
+		$revisions = $this->wpdr->get_revisions( $post_ID );
+
+		if ( count( $revisions ) <= 1 ) {
+			return true;
+		}
+
 		return false;
 	}
-
 }
 
-new wpdr_track_meta_changes;
+new WPDR_Track_Meta_Changes();
