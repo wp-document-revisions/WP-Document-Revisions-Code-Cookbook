@@ -6,11 +6,20 @@ Author: Benjamin Balter
 Version: 1.0
 Author URI: http://ben.balter.com/
  */
-
 class Document_Post_Parent {
 
-	private $post_type        = 'document';
-	private $parent_post_type = 'post'; // post_type to query for
+	/**
+	 * Identify document post type.
+	 *
+	 * @var string $post_type The document post type.
+	 */
+	private $post_type = 'document';
+	/**
+	 * Document type parent.
+	 *
+	 * @var string $parent_post_type parent The document parent post type.
+	 */
+	private $parent_post_type = 'post'; // post_type to query for.
 
 	/**
 	 * Register hooks with WP
@@ -35,16 +44,19 @@ class Document_Post_Parent {
 
 	/**
 	 * Metabox callback
+	 *
+	 * @param WP_Post $post The post object.
 	 */
 	public function metabox( $post ) {
 		wp_nonce_field( 'document_parent', '_parent_nonce' );
+		$token       = wp_create_nonce( 'document_parent_lookup' );
 		$post_parent = get_post( $post->post_parent );
 		?>
-	<p><input type="text" class="widefat" name="post_parent" id="post_parent" value="<?php echo ( $post_parent ) ? $post_parent->post_title : 0; ?>" />
-	<input type="hidden" id="post_parent_id" name="post_parent_id" value="<?php echo $post->post_parent; ?>" />
+	<p><input type="text" class="widefat" name="post_parent" id="post_parent" value="<?php echo esc_html( ( $post_parent ) ? $post_parent->post_title : 0 ); ?>" />
+	<input type="hidden" id="post_parent_id" name="post_parent_id" value="<?php echo esc_html( $post->post_parent ); ?>" />
 	</p>
 	<script>jQuery(document).ready(function($) {
-		$('#post_parent').autocomplete( ajaxurl + '?action=document_parent_lookup&_wpnonce=<?php echo wp_create_nonce( 'document_parent_lookup' ); ?>',{autoFill: true,});
+		$('#post_parent').autocomplete( ajaxurl + '?action=document_parent_lookup&_wpnonce=<?php echo esc_html( $token ); ?>',{autoFill: true,});
 		$('#post_parent').result(function(event,data,formatted) {
 			if (data) $('#post_parent_id').val(data[1]);
 		});
@@ -59,24 +71,26 @@ class Document_Post_Parent {
 		global $pagenow;
 
 		// verify either new or existing document.
-		if ( $pagenow != 'post-new.php' && $pagenow != 'post.php' ) {
+		if ( 'post-new.php' !== $pagenow && 'post.php' !== $pagenow ) {
 			return;
 		}
 
-		if ( $pagenow == 'post-new.php' && ( ! isset( $_GET['post_type'] ) || $_GET['post_type'] != 'document' ) ) {
+		if ( 'post-new.php' === $pagenow && ( ! isset( $_GET['post_type'] ) || 'document' !== sanitize_text_field( wp_unslash( $_GET['post_type'] ) ) ) ) {
 			return;
 		}
 
-		if ( $pagenow == 'post.php' && get_post( $_GET['post'] )->post_type != $this->post_type ) {
+		if ( 'post.php' === $pagenow && isset( $_GET['post'] ) && get_post( sanitize_text_field( wp_unslash( $_GET['post'] ) ) )->post_type !== $this->post_type ) {
 			return;
 		}
 
 		// js.
-		$suffix = ( WP_DEBUG ) ? '' : '.min';
-		wp_enqueue_script( 'jquery.autocomplete', plugins_url( '/js/jquery.autocomplete' . $suffix . '.js', __FILE__ ), array( 'jquery' ), null, true );
+		$suffix  = ( WP_DEBUG ) ? '' : '.min';
+		$js_file = '/js/jquery.autocomplete' . $suffix . '.js';
+		wp_enqueue_script( 'jquery.autocomplete', plugins_url( $js_file, __DIR__ ), array( 'jquery' ), filemtime( __DIR__ . $js_file ), true );
 
 		// css.
-		wp_enqueue_style( 'jquery.autocomplete', plugins_url( '/js/jquery.autocomplete.css', __FILE__ ) );
+		$css_file = '/js/jquery.autocomplete.css';
+		wp_enqueue_style( 'jquery.autocomplete', plugins_url( $css_file, __DIR__ ), array(), filemtime( __DIR__ . $css_file ) );
 
 	}
 
@@ -92,10 +106,11 @@ class Document_Post_Parent {
 
 		check_admin_referer( 'document_parent_lookup' );
 
-		$posts = $wpdb->get_results( $wpdb->prepare( "Select ID, post_title FROM $wpdb->posts WHERE post_type = '{$this->parent_post_type}' AND post_status = 'publish' AND post_title LIKE '%%%s%%' ORDER BY post_title ASC", $_GET['q'] ) );
+		// phpcs:ignore
+		$posts = $wpdb->get_results( $wpdb->prepare( "Select ID, post_title FROM $wpdb->posts WHERE post_type = '{$this->parent_post_type}' AND post_status = 'publish' AND post_title LIKE '%%%s%%' ORDER BY post_title ASC", wp_unslash( $_GET['q'] ) ) );
 
 		foreach ( $posts as $post ) {
-			echo $post->post_title . '|' . $post->ID . "\n";
+			echo esc_html( $post->post_title . '|' . $post->ID . "\n" );
 		}
 
 		exit();
@@ -103,6 +118,11 @@ class Document_Post_Parent {
 
 	/**
 	 * Filter to save post_parent when document is updated
+	 *
+	 * @param string  $parent  Post parent ID.
+	 * @param integer $post_ID Post ID.
+	 * @param array   $keys    Array of parsed post data.
+	 * @param array   $post    Array of sanitized, but otherwise unmodified post data.
 	 */
 	public function save_parent( $parent, $post_ID = null, $keys = null, $post = null ) {
 
