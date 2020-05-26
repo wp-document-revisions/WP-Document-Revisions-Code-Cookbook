@@ -65,4 +65,3 @@ class wpdr_recently_revised_widget extends WP_Widget {
 }
 
 new wpdr_recently_revised_documents;
-
