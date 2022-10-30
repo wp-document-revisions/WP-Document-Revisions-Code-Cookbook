@@ -14,10 +14,10 @@ This example will import all files of specified filetype in a given directory as
  */
 
 // relative or absolute path to wp-load.php (WordPress root).
-$wp_load_php = '/usr/share/wordpress/wp-load.php';
+$wp_load_php = '/var/www/public_html/wp-load.php';
 
 // relative or absolute path of directory to parse for files.
-$import_directory = '/usr/share/wordpress/documents/';
+$import_directory = '/var/www/public_html/documents/';
 
 // type of file to import.
 $extension = 'pdf';
