@@ -14,10 +14,10 @@ This example will import all files of specified filetype in a given directory as
  */
 
 // relative or absolute path to wp-load.php (WordPress root).
-$wp_load_php = '../../wp-load.php';
+$wp_load_php = '/usr/share/wordpress/wp-load.php';
 
 // relative or absolute path of directory to parse for files.
-$import_directory = '/var/www/public_html/documents/';
+$import_directory = '/usr/share/wordpress/documents/';
 
 // type of file to import.
 $extension = 'pdf';
@@ -31,6 +31,9 @@ $author = '1';
 // Initial workflow state ID (optional).
 $workflow_state = false;
 
+// bootstrap WP.
+require_once $wp_load_php;
+
 /**
  *  Helper function to parse directory for files.
  *
@@ -43,59 +46,152 @@ function wpdr_get_files( $directory, $extension ) {
 
 }
 
-// bootstrap WP.
-require_once $wp_load_php;
+/**
+ *  Helper function to rewrites uploaded revisions filename with secure hash to mask true location.
+ *
+ * @param array $file file data from WP.
+ * @return array $file file with new filename
+ */
+function filename_rewrite( $file ) {
+	$extension = pathinfo( $file['name'], PATHINFO_EXTENSION );
+
+	$file['name'] = md5( $file['name'] . microtime() ) . '.' . $extension;
+
+	return $file;
+}
+
+// MD5 output file name.
+add_filter( 'bulk_import_prefilter', 'filename_rewrite' );
+
+// set current user.
+wp_set_current_user( $author );
+
+// $wpdr is a global reference to the class.
+global $wpdr;
+if ( ! $wpdr ) {
+	require_once WP_PLUGIN_DIR . '/wp-document_revisions/includes/class-wp-document-revisions.php';
+	$wpdr = new WP_Document_Revisions();
+}
+
+/**
+ * Modifies location of uploaded document revisions.
+ *
+ * @param array $dir defaults passed from WP.
+ * @return array $dir modified directory
+ */
+function document_upload_dir_filter( $dir ) {
+	global $wpdr;
+	$wpdr_dir = $wpdr->document_upload_dir();
+	$wpdr_url = '/' . $wpdr->document_slug();
+
+	$dir['path']    = $wpdr_dir . $dir['subdir'];
+	$dir['url']     = home_url( $wpdr_url ) . $dir['subdir'];
+	$dir['basedir'] = $wpdr_dir;
+	$dir['baseurl'] = home_url( $wpdr_url );
+	return $dir;
+}
+
+// set document library path.
+add_filter( 'upload_dir', 'document_upload_dir_filter' );
+
+// set a global for setting the URL within the upload process.
+global $doc_load;
+
+/**
+ * Hide the name in the URL.
+ *
+ * @param array $file file object from WP.
+ * @return array modified file array
+ */
+function upload_rewrite_url( $file ) {
+
+	global $doc_load;
+	$file['url'] = get_permalink( $doc_load );
+
+	return $file;
+}
+
+add_filter( 'wp_handle_upload', 'upload_rewrite_url', 10, 2 );
 
 // array of files, here, a directory dump.
 $files = wpdr_get_files( $import_directory, $extension );
 
 // loop through.
 foreach ( $files as $file ) {
-
 	// cleanup filename to title.
-	$post_name = str_replace( '-', ' ', basename( $file ) );
-	$post_name = str_replace( '.' . $extension, '', $post_name );
-	$post_name = ucwords( $post_name );
+	$doc_name = str_replace( '-', ' ', basename( $file ) );
+	$doc_name = str_replace( '.' . $extension, '', $doc_name );
+	$doc_name = ucwords( $doc_name );
 
 	// build post array and insert post.
-	// phpcs:ignore WordPress.WP.GlobalVariablesOverride
-	$post = array(
-		'post_title'   => $post_name,
+	$doc    = array(
+		'post_title'   => $doc_name,
 		'post_status'  => 'private',
 		'post_author'  => $author,
 		'post_content' => '',
 		'post_excerpt' => $revision_message,
 		'post_type'    => 'document',
 	);
-	// phpcs:ignore WordPress.WP.GlobalVariablesOverride
-	$post_ID = wp_insert_post( $post );
+	$doc_id = wp_insert_post( $doc );
 
-	// if initial workflow state is set, set it.
+	// if initial workflow state is set, set it in post.
 	if ( $workflow_state ) {
-		wp_set_post_terms( $post_ID, array( $workflow_state ), 'workflow_state' );
+		wp_set_post_terms( $doc_id, array( $workflow_state ), 'workflow_state' );
 	}
 
 	// build attachment array and insert.
 	$wp_filetype = wp_check_filetype( basename( $file ), null );
+	$doc_file    = array(
+		'name'     => basename( $file ),
+		'type'     => $wp_filetype['type'],
+		'tmp_name' => $file,
+		'size'     => filesize( $file ),
+	);
 
+	require_once ABSPATH . 'wp-admin/includes/file.php';
+
+	// set the global post for setting the URL within the upload.
+	global $doc_load;
+	$doc_load = $doc_id;
+
+	$overrides = array(
+		'test_form' => false,
+		'action'    => 'bulk_import',
+	);
+	$upload    = wp_handle_upload( $doc_file, $overrides );
+
+	if ( ! empty( $upload['error'] ) ) {
+		wp_die( esc_html( $upload['error'] ) );
+	}
+
+	// use the encoded name for the post name and title.
+	$filename   = pathinfo( $upload['file'], PATHINFO_FILENAME );
 	$attachment = array(
 		'post_mime_type' => $wp_filetype['type'],
-		'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $file ) ),
+		'post_title'     => $filename,
+		'post_name'      => $filename,
 		'post_content'   => '',
 		'post_status'    => 'inherit',
 	);
 
-	$attach_id = wp_insert_attachment( $attachment, $file, $post_ID );
+	$attach_id = wp_insert_attachment( $attachment, $upload['file'], $doc_id );
 
 	// store attachment ID as post content.
-	// phpcs:ignore WordPress.WP.GlobalVariablesOverride
-	$post = array(
-		'ID'           => $post_ID,
-		'post_content' => $attach_id,
+	$doc = array(
+		'ID'           => $doc_id,
+		'post_content' => $wpdr->format_doc_id( $attach_id ),
 	);
-	wp_update_post( $post );
+	wp_update_post( $doc );
+
+	// possibly add metadata.
+	require_once ABSPATH . 'wp-admin/includes/image.php';
+
+	// rename images.
+	add_filter( 'wp_generate_attachment_metadata', array( $wpdr, 'hide_doc_attach_slug' ), 10, 3 );
+	$metadata = wp_generate_attachment_metadata( $attach_id, $upload['file'] );
+	wp_update_attachment_metadata( $attach_id, $metadata );
 
 	// debug info.
-	echo esc_html( "<p>$file added as $post_name</p>" );
+	echo '<p>' . esc_html( "$file added as $doc_name" ) . '</p>';
 }
 
