@@ -34,6 +34,11 @@ $workflow_state = false;
 // bootstrap WP.
 require_once $wp_load_php;
 
+// require additional WP files.
+require_once ABSPATH . 'wp-admin/includes/file.php';
+require_once ABSPATH . 'wp-admin/includes/media.php';
+require_once ABSPATH . 'wp-admin/includes/image.php';
+
 /**
  *  Helper function to parse directory for files.
  *
@@ -72,6 +77,9 @@ if ( ! $wpdr ) {
 	require_once WP_PLUGIN_DIR . '/wp-document_revisions/includes/class-wp-document-revisions.php';
 	$wpdr = new WP_Document_Revisions();
 }
+
+// rename images.
+add_filter( 'wp_generate_attachment_metadata', array( $wpdr, 'hide_doc_attach_slug' ), 10, 3 );
 
 /**
  * Modifies location of uploaded document revisions.
@@ -134,6 +142,10 @@ foreach ( $files as $file ) {
 	);
 	$doc_id = wp_insert_post( $doc );
 
+	// set the global post for setting the URL within the upload.
+	global $doc_load;
+	$doc_load = $doc_id;
+
 	// if initial workflow state is set, set it in post.
 	if ( $workflow_state ) {
 		wp_set_post_terms( $doc_id, array( $workflow_state ), 'workflow_state' );
@@ -141,40 +153,26 @@ foreach ( $files as $file ) {
 
 	// build attachment array and insert.
 	$wp_filetype = wp_check_filetype( basename( $file ), null );
-	$doc_file    = array(
+	$_FILES[0]   = array(
 		'name'     => basename( $file ),
 		'type'     => $wp_filetype['type'],
 		'tmp_name' => $file,
 		'size'     => filesize( $file ),
 	);
 
-	require_once ABSPATH . 'wp-admin/includes/file.php';
-
-	// set the global post for setting the URL within the upload.
-	global $doc_load;
-	$doc_load = $doc_id;
+	// attachment overrides.
+	$attachment = array();
 
 	$overrides = array(
 		'test_form' => false,
 		'action'    => 'bulk_import',
 	);
-	$upload    = wp_handle_upload( $doc_file, $overrides );
 
-	if ( ! empty( $upload['error'] ) ) {
-		wp_die( esc_html( $upload['error'] ) );
+	$attach_id = media_handle_upload( 0, $doc_id, $attachment, $overrides );
+
+	if ( $attach_id instanceof WP_Error ) {
+		wp_die( 'Error to load Attachment' );
 	}
-
-	// use the encoded name for the post name and title.
-	$filename   = pathinfo( $upload['file'], PATHINFO_FILENAME );
-	$attachment = array(
-		'post_mime_type' => $wp_filetype['type'],
-		'post_title'     => $filename,
-		'post_name'      => $filename,
-		'post_content'   => '',
-		'post_status'    => 'inherit',
-	);
-
-	$attach_id = wp_insert_attachment( $attachment, $upload['file'], $doc_id );
 
 	// store attachment ID as post content.
 	$doc = array(
@@ -183,15 +181,6 @@ foreach ( $files as $file ) {
 	);
 	wp_update_post( $doc );
 
-	// possibly add metadata.
-	require_once ABSPATH . 'wp-admin/includes/image.php';
-
-	// rename images.
-	add_filter( 'wp_generate_attachment_metadata', array( $wpdr, 'hide_doc_attach_slug' ), 10, 3 );
-	$metadata = wp_generate_attachment_metadata( $attach_id, $upload['file'] );
-	wp_update_attachment_metadata( $attach_id, $metadata );
-
 	// debug info.
 	echo '<p>' . esc_html( "$file added as $doc_name" ) . '</p>';
 }
-
