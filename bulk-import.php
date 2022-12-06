@@ -103,7 +103,7 @@ function document_upload_dir_filter( $dir ) {
 add_filter( 'upload_dir', 'document_upload_dir_filter' );
 
 // set a global for setting the URL within the upload process.
-global $doc_load;
+global $doc_id;
 
 /**
  * Hide the name in the URL.
@@ -113,8 +113,8 @@ global $doc_load;
  */
 function upload_rewrite_url( $file ) {
 
-	global $doc_load;
-	$file['url'] = get_permalink( $doc_load );
+	global $doc_id;
+	$file['url'] = get_permalink( $doc_id );
 
 	return $file;
 }
@@ -141,10 +141,6 @@ foreach ( $files as $file ) {
 		'post_type'    => 'document',
 	);
 	$doc_id = wp_insert_post( $doc );
-
-	// set the global post for setting the URL within the upload.
-	global $doc_load;
-	$doc_load = $doc_id;
 
 	// if initial workflow state is set, set it in post.
 	if ( $workflow_state ) {
@@ -184,3 +180,4 @@ foreach ( $files as $file ) {
 	// debug info.
 	echo '<p>' . esc_html( "$file added as $doc_name" ) . '</p>';
 }
+
