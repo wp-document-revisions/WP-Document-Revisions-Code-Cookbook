@@ -7,7 +7,6 @@ Sample code to help customize WP Document Revisions. Once adapted to your organi
 1. **Document Parent** - Creates UI for selecting document's post parent (useful for querying on the front-end like attachments)
 1. **Filetype Taxonomy** - Adds support to filter by filetype
 1. **Network Admin** - Provides interface to set document upload directory when plugin is not network activated on multisite installs
-1. **Remove Date from Permalink** - Remove the automatically prepended `/yyyy/mm/` from document links
 1. **Rename Documents** - changes all references to "Documents" in the interface to any label of your choosing
 1. **State Change Notification** - how to use document api to allow the author to receive notification whenever his or her document changes workflow states 
 1. **Taxonomy Permissions** - allows setting user-level permissions and access control based on document being in a given workflow state or other custom taxonomy such as department
@@ -18,5 +17,6 @@ Code Cookbook Alumni (Deprecated functions now included with the plugin by defau
 1. **Revision Shortcode** - Code sample to demonstrate short code to list revisions
 1. **Edit Flow Support** - detect and integrate with Edit Flow, when present
 1. **Remove Workflow States** - Completely removes Workflow state taxonomy backend and UI
+1. **Remove Date from Permalink** - Remove the automatically prepended `/yyyy/mm/` from document links
 
 *See also*, the [full set up custom plugins used](https://github.com/benbalter/PCLJ-Members-Workspace) to power a peer reviewed scholarly publication's workflow.
