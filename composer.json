@@ -1,0 +1,26 @@
+{
+  "name": "wp-document-revisions/WP-Document-Revisions-Code-Cookbook",
+  "description": "Sample Code for Common WP Document Revision Implimentations.",
+  "license": "GPLv3",
+  "authors": [
+      {
+          "name": "Ben Balter",
+          "email": "ben@balter.com"
+      }
+  ],
+  "require": {
+  },
+  "require-dev": {
+    "wp-coding-standards/wpcs": "~2.3",
+    "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+    "squizlabs/php_codesniffer": "~3.7",
+    "yoast/phpunit-polyfills": "*"
+  },
+  "config": {
+   "bin-dir": "bin",
+   "vendor-dir": "vendor",
+   "allow-plugins": {
+     "dealerdirect/phpcodesniffer-composer-installer": true
+   }
+ }
+}
