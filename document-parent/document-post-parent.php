@@ -5,6 +5,12 @@ Description: Creates UI for selecting document parent
 Author: Benjamin Balter
 Version: 1.0
 Author URI: http://ben.balter.com/
+
+@package WP-Document-Revisions-Code-Cookbook
+ */
+
+/**
+ * Class definition.
  */
 class Document_Post_Parent {
 
@@ -68,6 +74,7 @@ class Document_Post_Parent {
 	 * Loads autocomplete jquery plugin on document edit page
 	 */
 	public function enqueue_autocomplete() {
+		check_admin_referer();
 		global $pagenow;
 
 		// verify either new or existing document.

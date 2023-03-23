@@ -120,7 +120,7 @@ $wpdr_permissions_taxonomy_args = array(
 	),
 );
 
-include_once __DIR__ . '/includes/class-wpdr-taxonomy-permissions.php';
+require_once __DIR__ . '/includes/class-wpdr-taxonomy-permissions.php';
 
 $wpdr_tp = new WPDR_Taxonomy_Permissions();
 
