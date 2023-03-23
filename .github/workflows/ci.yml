@@ -1,0 +1,32 @@
+# Based on https://github.com/wp-document-revisions/wp-document-revisions
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  phpcs:
+    runs-on: ubuntu-latest
+    env:
+      TRAVIS_BUILD_DIR: ${{ github.workspace }}
+    strategy: 
+      matrix:
+        php_version: [7.4]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php_version }}
+          extensions: mysqli
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+      
+      - name: phpcs
+        run: script/phpcs
