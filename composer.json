@@ -1,6 +1,6 @@
 {
-  "name": "wp-document-revisions/WP-Document-Revisions-Code-Cookbook",
-  "description": "Sample Code for Common WP Document Revision Implimentations.",
+  "name": "wp-document-revisions/wp-document-revisions-code-cookbook",
+  "description": "Sample Code for Common WP Document Revision Implementations.",
   "license": "GPLv3",
   "authors": [
       {
