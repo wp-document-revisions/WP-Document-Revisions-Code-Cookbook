@@ -26,7 +26,7 @@ jobs:
           extensions: mysqli
 
       - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest
+        run: composer install --prefer-dist --no-progress
       
       - name: phpcs
         run: script/phpcs
