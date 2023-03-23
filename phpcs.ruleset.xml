@@ -3,7 +3,9 @@
 
 	<extensions>*/php</extensions>
 
-	<rule ref="WordPress"/>
+	<rule ref="WordPress">
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName" />
+	</rule>
 
 	<exclude-pattern>*/vendor/*</exclude-pattern>
 	<exclude-pattern>*/vendor/autoload.php</exclude-pattern>

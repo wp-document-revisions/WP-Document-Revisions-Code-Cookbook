@@ -120,13 +120,16 @@ $wpdr_permissions_taxonomy_args = array(
 	),
 );
 
-include_once( __DIR__ . '/includes/class-wpdr-taxonomy-permissions.php' ); 
+include_once __DIR__ . '/includes/class-wpdr-taxonomy-permissions.php';
 
 $wpdr_tp = new WPDR_Taxonomy_Permissions();
 
 /**
  * Filters to set specific processing options.
  */
+
+// disable phpcs from here.
+// phpcs:disable
 
 /**
  * By default, users require the term-related capability generated that correspond to the terms held on the documents.
