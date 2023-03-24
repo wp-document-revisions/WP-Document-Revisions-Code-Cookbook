@@ -25,6 +25,7 @@ License: GPL2
 function wpdr_shotcode( $atts ) {
 
 	// extract args.
+	// phpcs:ignore WordPress.PHP.DontExtract.extract_extract
 	extract(
 		shortcode_atts(
 			array(
@@ -49,6 +50,7 @@ function wpdr_shotcode( $atts ) {
 	<?php
 	// loop through each revision.
 	foreach ( $revisions as $revision ) {
+		// phpcs:disable WordPress.DateTime.CurrentTimeTimestamp.Requested
 		?>
 		<li>
 			<a href="<?php echo esc_url( get_permalink( $revision->ID ) ); ?>" title="<?php echo esc_attr( $revision->post_date ); ?>" class="timestamp" id="<?php echo esc_attr( strtotime( $revision->post_date ) ); ?>">
@@ -56,6 +58,7 @@ function wpdr_shotcode( $atts ) {
 			</a> by <?php echo esc_attr( get_the_author_meta( 'display_name', $revision->post_author ) ); ?>
 		</li>
 		<?php
+		// phpcs:enable WordPress.DateTime.CurrentTimeTimestamp.Requested
 	}
 	?>
 	</ul>
