@@ -20,7 +20,7 @@ License: GPL2
 function wpdr_remove_dates_from_permalink_filter( $link, $post ) {
 
 	$timestamp = '/' . substr( $document->post_date, 0, 7 ) . '/';
-	return str_replace( $timestamp , '/', $link );
+	return str_replace( $timestamp, '/', $link );
 }
 
 add_filter( 'document_permalink', 'wpdr_remove_dates_from_permalink_filter', 10, 2 );
