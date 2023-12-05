@@ -1,7 +1,7 @@
 <?php
 /**
 Plugin Name: WP Document Revisions - Taxonomy-Based Permissions
-Plugin URI: https://github.com/benbalter/WP-Document-Revisions-Code-Cookbook
+Plugin URI: https://github.com/wp-document-revisions/WP-Document-Revisions-Code-Cookbook
 Description: Extends the Members (or other permissions plugins) to allow taxonomy (category, tag, etc.) based permissions
 Version: 1.1
 Author: Benjamin J. Balter

@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: WP Document Revisions - Recently Revised Widget
- * Plugin URI: https://github.com/benbalter/WP-Document-Revisions-Code-Cookbook
+ * Plugin URI: https://github.com/wp-document-revisions/WP-Document-Revisions-Code-Cookbook
  * Description: Code sample to demonstrate a widget of recently revised files
  * Version: 1.0
  * Author: Benjamin J. Balter

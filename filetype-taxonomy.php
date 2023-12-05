@@ -1,7 +1,7 @@
 <?php
 /**
 Plugin Name: WP Document Revisions - Filtering by Filetype
-Plugin URI: https://github.com/benbalter/WP-Document-Revisions-Code-Cookbook
+Plugin URI: https://github.com/wp-document-revisions/WP-Document-Revisions-Code-Cookbook
 Description: Code sample to demonstrate how to build a filter by filetype taxonomy
 Version: 1.0
 Author: Benjamin J. Balter

@@ -48,7 +48,6 @@ class WPDR_Track_Meta_Changes {
 
 		// appending.
 		add_action( 'save_post_document', array( &$this, 'append_changes_to_revision_summary' ), 20, 1 );
-
 	}
 	/**
 	 * Makes all WPDR functions accessible as $this->wpdr->{function}
@@ -86,36 +85,34 @@ class WPDR_Track_Meta_Changes {
 		do_action( 'document_title_changed', $post_ID, $old, $new );
 
 		// translators: %1$s is the old title,  %2$s is the new title.
-		$this->document_change_list[] = sprintf( __( 'Title changed from "%1$s" to "%2$s"', 'wp_document_revisions' ), $old->post_title, $new->post_title );
-
+		$this->document_change_list[] = sprintf( __( 'Title changed from "%1$s" to "%2$s"', 'wp-document-revisions' ), $old->post_title, $new->post_title );
 	}
 
 	/**
 	 * Tracks when a post status changes
 	 *
-	 * @param string $new the new status.
-	 * @param string $old the old status.
-	 * @param object $post the post object.
+	 * @param string $new_s the new status.
+	 * @param string $old_s the old status.
+	 * @param object $post  the post object.
 	 */
-	public function track_status_changes( $new, $old, $post ) {
+	public function track_status_changes( $new_s, $old_s, $post ) {
 
 		if ( $this->dont_track( $post->ID ) ) {
 			return false;
 		}
 
-		if ( 'new' === $old || 'auto_draft' === $old ) {
+		if ( 'new' === $old_s || 'auto_draft' === $old_s ) {
 			return false;
 		}
 
-		if ( $new === $old ) {
+		if ( $new_s === $old_s ) {
 			return false;
 		}
 
-		do_action( 'document_visibility_changed', $post->ID, $old, $new );
+		do_action( 'document_visibility_changed', $post->ID, $old_s, $new_s );
 
 		// translators: %1$s is the old status,  %2$s is the new status.
-		$this->document_change_list[] = sprintf( __( 'Visibility changed from "%1$s" to "%2$s"', 'wp_document_revisions' ), $old, $new );
-
+		$this->document_change_list[] = sprintf( __( 'Visibility changed from "%1$s" to "%2$s"', 'wp-document-revisions' ), $old_s, $new_s );
 	}
 
 	/**
@@ -166,15 +163,15 @@ class WPDR_Track_Meta_Changes {
 			if ( ! count( $terms_fmt ) ) {
 				$terms_formatted = $last;
 			} else {
-				$terms_formatted = implode( ', ', $terms_fmt ) . __( ' and ', 'wp_document_revisions' ) . $last;
+				$terms_formatted = implode( ', ', $terms_fmt ) . __( ' and ', 'wp-document-revisions' ) . $last;
 			}
 
 			// translators: %1$s is the list of terms added.
-			$add = sprintf( __( ' %1$s added', 'wp_document_revisions' ), $terms_formatted );
+			$add = sprintf( __( ' %1$s added', 'wp-document-revisions' ), $terms_formatted );
 
 			if ( ! empty( $removed_tt_ids ) ) {
 				// translators: separator between added and removed..
-				$sep = __( ',', 'wp_document_revisions' );
+				$sep = __( ',', 'wp-document-revisions' );
 			}
 		}
 
@@ -192,16 +189,16 @@ class WPDR_Track_Meta_Changes {
 			if ( ! count( $terms_fmt ) ) {
 				$terms_formatted = $last;
 			} else {
-				$terms_formatted = implode( ', ', $terms_fmt ) . __( ' and ', 'wp_document_revisions' ) . $last;
+				$terms_formatted = implode( ', ', $terms_fmt ) . __( ' and ', 'wp-document-revisions' ) . $last;
 			}
 
 			// translators: %1$s is the list of terms removed.
-			$rem = sprintf( __( ' %1$s removed', 'wp_document_revisions' ), $terms_formatted );
+			$rem = sprintf( __( ' %1$s removed', 'wp-document-revisions' ), $terms_formatted );
 		}
 
 		if ( '' !== $add || '' !== $rem ) {
 			// translators: %1$s is the taxonomy's name,  %2$s is the list of terms added,  %3$s is the separator,  %3$s is the list of terms removed.
-			$message = sprintf( __( '%1$s:%2$s%3$s%4$s', 'wp_document_revisions' ), $taxonomy_formatted, $add, $sep, $rem );
+			$message = sprintf( __( '%1$s:%2$s%3$s%4$s', 'wp-document-revisions' ), $taxonomy_formatted, $add, $sep, $rem );
 
 			$this->document_change_list[] = $message;
 		}
@@ -263,7 +260,6 @@ class WPDR_Track_Meta_Changes {
 
 		// reset in case another post is also being saved for some reason.
 		$this->document_change_list = array();
-
 	}
 
 	/**

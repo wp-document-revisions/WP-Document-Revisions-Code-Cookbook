@@ -1,7 +1,7 @@
 <?php
 /**
 Plugin Name: WP Document Revisions - Edit Flow Compatability
-Plugin URI: https://github.com/benbalter/WP-Document-Revisions-Code-Cookbook/
+Plugin URI: https://github.com/wp-document-revisions/WP-Document-Revisions-Code-Cookbook/
 Description: Makes WP Document Revisions work with the Edit Flow plugin
 Version: 1.0
 Author: Benjamin J. Balter
