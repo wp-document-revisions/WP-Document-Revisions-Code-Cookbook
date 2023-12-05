@@ -123,16 +123,16 @@ class Document_Post_Parent {
 	/**
 	 * Filter to save post_parent when document is updated
 	 *
-	 * @param string  $parent_ID Post parent ID.
+	 * @param string  $parent_id Post parent ID.
 	 * @param integer $post_ID   Post ID.
 	 * @param array   $keys      Array of parsed post data.
 	 * @param array   $post      Array of sanitized, but otherwise unmodified post data.
 	 */
-	public function save_parent( $parent_ID, $post_ID = null, $keys = null, $post = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+	public function save_parent( $parent_id, $post_ID = null, $keys = null, $post = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 
 		// filter fires on new and non-document posts, if so kick.
 		if ( ! isset( $_POST['post_parent_id'] ) ) {
-			return $parent_ID;
+			return $parent_id;
 		}
 
 		// nonce check also verifies this is a document.
