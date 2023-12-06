@@ -61,7 +61,6 @@ class WP_Document_Revisions_Network_Admin {
 		}
 
 		add_action( 'plugins_loaded', array( &$this, 'maybe_load_main_class' ) );
-
 	}
 
 	/**
@@ -85,7 +84,6 @@ class WP_Document_Revisions_Network_Admin {
 
 		// load the plugin as if it were network activated.
 		require_once $file;
-
 	}
 }
 

@@ -48,7 +48,6 @@ require_once ABSPATH . 'wp-admin/includes/image.php';
 function wpdr_get_files( $directory, $extension ) {
 
 	return glob( $directory . '*.' . $extension );
-
 }
 
 /**
@@ -180,4 +179,3 @@ foreach ( $files as $file ) {
 	// debug info.
 	echo '<p>' . esc_html( "$file added as $doc_name" ) . '</p>';
 }
-

@@ -1,7 +1,7 @@
 <?php
 /**
 Plugin Name: WP Document Revisions - Taxonomy-Based Permissions
-Plugin URI: https://github.com/benbalter/WP-Document-Revisions-Code-Cookbook
+Plugin URI: https://github.com/wp-document-revisions/WP-Document-Revisions-Code-Cookbook
 Description: Extends the Members (or other permissions plugins) to allow taxonomy (category, tag, etc.) based permissions
 Version: 1.1
 Author: Benjamin J. Balter
@@ -120,13 +120,16 @@ $wpdr_permissions_taxonomy_args = array(
 	),
 );
 
-include_once( __DIR__ . '/includes/class-wpdr-taxonomy-permissions.php' ); 
+require_once __DIR__ . '/includes/class-wpdr-taxonomy-permissions.php';
 
 $wpdr_tp = new WPDR_Taxonomy_Permissions();
 
 /**
  * Filters to set specific processing options.
  */
+
+// disable phpcs from here.
+// phpcs:disable
 
 /**
  * By default, users require the term-related capability generated that correspond to the terms held on the documents.

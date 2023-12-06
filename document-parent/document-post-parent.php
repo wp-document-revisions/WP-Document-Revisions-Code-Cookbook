@@ -5,6 +5,12 @@ Description: Creates UI for selecting document parent
 Author: Benjamin Balter
 Version: 1.0
 Author URI: http://ben.balter.com/
+
+@package WP-Document-Revisions-Code-Cookbook
+ */
+
+/**
+ * Class definition.
  */
 class Document_Post_Parent {
 
@@ -30,7 +36,6 @@ class Document_Post_Parent {
 		add_action( 'admin_init', array( &$this, 'enqueue_autocomplete' ) );
 		add_action( 'wp_ajax_document_parent_lookup', array( &$this, 'lookup' ) );
 		add_action( 'wp_insert_post_parent', array( &$this, 'save_parent' ) );
-
 	}
 
 	/**
@@ -39,7 +44,6 @@ class Document_Post_Parent {
 	public function add_metabox() {
 
 		add_meta_box( 'document-parent', 'Post Parent', array( &$this, 'metabox' ), $this->post_type, 'normal', 'low' );
-
 	}
 
 	/**
@@ -68,6 +72,7 @@ class Document_Post_Parent {
 	 * Loads autocomplete jquery plugin on document edit page
 	 */
 	public function enqueue_autocomplete() {
+		check_admin_referer();
 		global $pagenow;
 
 		// verify either new or existing document.
@@ -91,7 +96,6 @@ class Document_Post_Parent {
 		// css.
 		$css_file = '/js/jquery.autocomplete.css';
 		wp_enqueue_style( 'jquery.autocomplete', plugins_url( $css_file, __DIR__ ), array(), filemtime( __DIR__ . $css_file ) );
-
 	}
 
 	/**
@@ -119,16 +123,16 @@ class Document_Post_Parent {
 	/**
 	 * Filter to save post_parent when document is updated
 	 *
-	 * @param string  $parent  Post parent ID.
-	 * @param integer $post_ID Post ID.
-	 * @param array   $keys    Array of parsed post data.
-	 * @param array   $post    Array of sanitized, but otherwise unmodified post data.
+	 * @param string  $parent_id Post parent ID.
+	 * @param integer $post_ID   Post ID.
+	 * @param array   $keys      Array of parsed post data.
+	 * @param array   $post      Array of sanitized, but otherwise unmodified post data.
 	 */
-	public function save_parent( $parent, $post_ID = null, $keys = null, $post = null ) {
+	public function save_parent( $parent_id, $post_ID = null, $keys = null, $post = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 
 		// filter fires on new and non-document posts, if so kick.
 		if ( ! isset( $_POST['post_parent_id'] ) ) {
-			return $parent;
+			return $parent_id;
 		}
 
 		// nonce check also verifies this is a document.

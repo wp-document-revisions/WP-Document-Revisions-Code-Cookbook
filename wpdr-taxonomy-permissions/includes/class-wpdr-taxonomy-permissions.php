@@ -127,7 +127,7 @@ class WPDR_Taxonomy_Permissions {
 
 		foreach ( $wp_roles->role_names as $role => $label ) {
 			foreach ( $this->base_caps as $base_cap ) {
-				WP_Roles::remove_cap( $role, $base_cap . '_in_' . $term_obj->slug );
+				$role->remove_cap( $role, $base_cap . '_in_' . $term_obj->slug );
 			}
 		}
 	}
@@ -529,12 +529,12 @@ class WPDR_Taxonomy_Permissions {
 			$results = array_values( $results );
 
 			if ( is_array( $results ) ) {
-				$query_object->found_posts = count( $results );
+				$query->found_posts = count( $results );
 			} else {
 				if ( null === $results ) {
-					$query_object->found_posts = 0;
+					$query->found_posts = 0;
 				} else {
-					$query_object->found_posts = 1;
+					$query->found_posts = 1;
 				}
 			}
 		}
