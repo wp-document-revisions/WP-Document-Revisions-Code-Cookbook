@@ -11,6 +11,7 @@ Sample code to help customize WP Document Revisions. Once adapted to your organi
 1. **State Change Notification** - how to use document api to allow the author to receive notification whenever his or her document changes workflow states 
 1. **Taxonomy Permissions** - allows setting user-level permissions and access control based on document being in a given workflow state or other custom taxonomy such as department
 1. **Role Permissions** - Integrates the Members plugin Content Permissions functionality into WP Document Revisions to provide role based document access.
+1. **WPML Support** - Integrates WPML with WP Document Revisions to provide multi-language documents.
 
 Code Cookbook Alumni (Deprecated functions now included with the plugin by default):
 
