@@ -864,33 +864,6 @@ class WPDR_WPML_Support {
 	}
 
 	/**
-	 * Adds help tabs to help tab API.
-	 *
-	 * @since 0.5
-	 * @uses get_help_text()
-	 * @return void
-	 */
-	public function add_help_tab() {
-		$screen = get_current_screen();
-
-		// only interested in document post_types.
-		if ( 'document' !== $screen->post_type ) {
-			return;
-		}
-
-		// loop through each tab in the help array and add.
-		foreach ( $this->get_help_text( $screen ) as $title => $content ) {
-			$screen->add_help_tab(
-				array(
-					'title'   => $title,
-					'id'      => str_replace( ' ', '_', $title ),
-					'content' => $content,
-				)
-			);
-		}
-	}
-
-	/**
 	 * Helper function to provide help text as an array.
 	 *
 	 * @since 0.5

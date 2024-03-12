@@ -203,6 +203,7 @@ class WPDR_Taxonomy_Permissions {
 		}
 
 		return $caps;
+		// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 	}
 
 	/**
@@ -375,7 +376,7 @@ class WPDR_Taxonomy_Permissions {
 			$terms = get_terms(
 				array(
 					'taxonomy'   => $this->taxonomy,
-					'hide_empty' => false
+					'hide_empty' => false,
 				)
 			);
 
@@ -635,7 +636,7 @@ class WPDR_Taxonomy_Permissions {
 						// translators: %s is the taxonomy.
 						echo esc_html( sprintf( __( 'WPDR Taxonomy Permissions requires published documents to have only one term entered for taxonomy %s.', 'wp-document-revisions' ), $this->taxonomy ) );
 						break;
-				};
+				}
 				?>
 				</p>
 				<p><?php esc_html_e( 'Your update has been cancelled and data is in its original state.', 'wp-document-revisions' ); ?></p>
