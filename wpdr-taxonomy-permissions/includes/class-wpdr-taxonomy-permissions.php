@@ -176,7 +176,10 @@ class WPDR_Taxonomy_Permissions {
 	 */
 	public function default_caps_filter( $caps, $role ) {
 		// get terms in the selected taxonomy.
-		$terms = get_terms( $this->taxonomy, array( 'hide_empty' => false ) );
+		$terms = get_terms( array(
+			'taxonomy'   => $this->taxonomy,
+			'hide_empty' => false,
+		) );
 
 		// build out term specific caps.
 		foreach ( $caps as $cap => $grant ) {

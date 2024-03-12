@@ -49,6 +49,7 @@ class WPDR_Track_Meta_Changes {
 		// appending.
 		add_action( 'save_post_document', array( &$this, 'append_changes_to_revision_summary' ), 20, 1 );
 	}
+
 	/**
 	 * Makes all WPDR functions accessible as $this->wpdr->{function}
 	 * Call here so that Doc Revs is loaded
