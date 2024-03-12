@@ -8,6 +8,7 @@
 
 // No direct access allowed to plugin php file.
 if ( ! defined( 'ABSPATH' ) ) {
+	// phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
 	die( esc_html__( 'You are not allowed to call this file directly.', 'process-item-list' ) );
 }
 
@@ -56,6 +57,7 @@ class Process_Item_List {
 	public function __construct( $list_name = null ) {
 		// check list name is defined.
 		if ( empty( $list_name ) ) {
+			// phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
 			wp_die( esc_html__( 'Class Process_Item_List needs to be called with a parameter', 'process-item-list' ) );
 		}
 

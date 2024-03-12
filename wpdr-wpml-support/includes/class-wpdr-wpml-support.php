@@ -8,7 +8,7 @@
 
 // No direct access allowed to plugin php file.
 if ( ! defined( 'ABSPATH' ) ) {
-	die( esc_html__( 'You are not allowed to call this file directly.', 'wpdr-wpml-support' ) );
+	die( esc_html__( 'You are not allowed to call this file directly.', 'wp-document-revisions' ) );
 }
 
 /**
@@ -92,7 +92,7 @@ class WPDR_WPML_Support {
 		add_action( 'before_delete_post', array( &$this, 'before_delete_post' ), 5, 2 );
 
 		// support languages.
-		load_plugin_textdomain( 'wpdr-wpml-support', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+		load_plugin_textdomain( 'wp-document-revisions', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
 
 		// help and messages.
 		add_action( 'admin_head', array( $this, 'add_help_tab' ) );
@@ -664,7 +664,7 @@ class WPDR_WPML_Support {
 				$script .= 'attr = document.getElementById("content-add_media");' .
 					'if ( attr != null ) {' .
 						'attr.setAttribute( "style", "pointer-events: none" );' .
-						'attr.insertAdjacentHTML( "beforebegin", "' . __( 'Document uploads are synchronized<br/>Use original document post', 'wpdr-wpml-support' ) . '<br/>");' .
+						'attr.insertAdjacentHTML( "beforebegin", "' . __( 'Document uploads are synchronized<br/>Use original document post', 'wp-document-revisions' ) . '<br/>");' .
 					'} ';
 			}
 			$script .= '} ' .
@@ -864,40 +864,6 @@ class WPDR_WPML_Support {
 	}
 
 	/**
-	 * Helper function to provide help text as an array.
-	 *
-.5
-	 * @global $wpdb
-	 * @param int $orig_id the ID of the post being tested.
-	 * @return int[]
-	 */
-	private function get_orig_translations( $orig_id ) {
-		// look up WPML data.
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$tran = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT o.language_code, o.element_id FROM {$wpdb->prefix}icl_translations AS o " .
-				'WHERE o.source_language_code IS NOT NULL ' .
-				"AND o.trid = (SELECT m.trid FROM {$wpdb->prefix}icl_translations AS m WHERE m.element_id = %d AND m.source_language_code IS NULL )",
-				$orig_id,
-			),
-			ARRAY_A,
-		);
-
-		if ( ! is_array( $tran ) ) {
-			// no translation data so it is the original.
-			return array();
-		}
-		return wp_list_pluck( $tran, 'element_id', 'language_code' );
-	}
-
-	/*
-					FUNCTIONS ADDED FOR HELP TEXT DEBUG PROCESSING.
-					===============================================
-	*/
-
-	/**
 	 * Adds help tabs to help tab API.
 	 *
 	 * @since 0.5
@@ -927,7 +893,7 @@ class WPDR_WPML_Support {
 	/**
 	 * Helper function to provide help text as an array.
 	 *
-                       	 * @since 0.5
+	 * @since 0.5
 	 * @param WP_Screen $screen (optional) the current screen.
 	 * @returns string[] the help text
 	 */
@@ -947,8 +913,8 @@ class WPDR_WPML_Support {
 		// value is the help text (as HTML).
 		$help = array(
 			'document' => array(
-				__( 'WPML Calls', 'wpdr-wpml-support' ) => $this->get_wpml_data( $post ),
-				__( 'WPDR Data', 'wpdr-wpml-support' )  => $this->get_document_data( $post ),
+				__( 'WPML Calls', 'wp-document-revisions' ) => $this->get_wpml_data( $post ),
+				__( 'WPDR Data', 'wp-document-revisions' )  => $this->get_document_data( $post ),
 			),
 		);
 
@@ -981,7 +947,7 @@ class WPDR_WPML_Support {
 		$output =
 		'<div style="line-height:1.0;"><table class="form-table" style="clear:none;">' .
 		'<tr>' .
-		'<th scope="row" style="line-height:1.0; padding:5px 10px;"><label for="labels-doc">' . __( 'Document ID', 'wpdr-wpml-support' ) . '</label></th>' .
+		'<th scope="row" style="line-height:1.0; padding:5px 10px;"><label for="labels-doc">' . __( 'Document ID', 'wp-document-revisions' ) . '</label></th>' .
 		'<td style="line-height:1.0; padding:5px 10px;margin-bottom:0;">' . $post->ID . '</td></tr>';
 
 		$orig   = $this->get_original_translation( $post->ID );
@@ -989,14 +955,14 @@ class WPDR_WPML_Support {
 
 		$output .=
 		'<tr>' .
-		'<th scope="row" style="line-height:1.0; padding:5px 10px;"><label for="labels-master">' . __( 'Master', 'wpdr-wpml-support' ) . '</label></th>' .
+		'<th scope="row" style="line-height:1.0; padding:5px 10px;"><label for="labels-master">' . __( 'Master', 'wp-document-revisions' ) . '</label></th>' .
 		'<td style="line-height:1.0; padding:5px 10px;margin-bottom:0;">' .
 		$orig . '  [Uses translation table]<br />' .
 		$master . "  [Uses apply_filters( 'wpml_master_post_from_duplicate', $post->ID )]" . '</td></tr>';
 
 		$trans = $this->get_orig_translations( $orig );
 		if ( empty( $trans ) ) {
-			$list_a = __( 'No translations', 'wpdr-wpml-support' );
+			$list_a = __( 'No translations', 'wp-document-revisions' );
 		} else {
 			$list_a = '';
 			foreach ( $trans as $lang => $tran ) {
@@ -1007,7 +973,7 @@ class WPDR_WPML_Support {
 
 		$trans = apply_filters( 'wpml_post_duplicates', $orig );
 		if ( empty( $trans ) ) {
-			$list_b = __( 'No translations', 'wpdr-wpml-support' );
+			$list_b = __( 'No translations', 'wp-document-revisions' );
 		} else {
 			$list_b = '';
 			foreach ( $trans as $lang => $tran ) {
@@ -1018,15 +984,15 @@ class WPDR_WPML_Support {
 
 		$output .=
 		'<tr>' .
-		'<th scope="row" style="line-height:1.0; padding:5px 10px;"><label for="labels-trans">' . __( 'Translated Posts', 'wpdr-wpml-support' ) . '</label></th>' .
+		'<th scope="row" style="line-height:1.0; padding:5px 10px;"><label for="labels-trans">' . __( 'Translated Posts', 'wp-document-revisions' ) . '</label></th>' .
 		'<td style="line-height:1.0; padding:5px 10px;margin-bottom:0;">' . $list_a . '<br />' . $list_b .
 		'<br />' . "  [Uses translation table / apply_filters( 'wpml_post_duplicates', $orig )]" . '</td></tr>';
 
-		$share = ( $this->post_in_shared_mode( $post->ID ) ? __( 'Documents Shared', 'wpdr-wpml-support' ) : __( 'Documents Unique', 'wpdr-wpml-support' ) );
+		$share = ( $this->post_in_shared_mode( $post->ID ) ? __( 'Documents Shared', 'wp-document-revisions' ) : __( 'Documents Unique', 'wp-document-revisions' ) );
 
 		$output .=
 		'<tr>' .
-		'<th scope="row" style="line-height:1.0; padding:5px 10px;"><label for="labels-share">' . __( 'Share Mode', 'wpdr-wpml-support' ) . '</label></th>' .
+		'<th scope="row" style="line-height:1.0; padding:5px 10px;"><label for="labels-share">' . __( 'Share Mode', 'wp-document-revisions' ) . '</label></th>' .
 		'<td style="line-height:1.0; padding:5px 10px;margin-bottom:0;">' . $share . '</td></tr>';
 
 		$output .= '</table></div>';
@@ -1050,34 +1016,34 @@ class WPDR_WPML_Support {
 		$output =
 		'<div style="line-height:1.0;"><table class="form-table" style="clear:none;">' .
 		'<tr>' .
-		'<th scope="row" style="line-height:1.0; padding:5px 10px;"><label for="labels-post">' . __( 'Post ID', 'wpdr-wpml-support' ) . '</label></th>' .
+		'<th scope="row" style="line-height:1.0; padding:5px 10px;"><label for="labels-post">' . __( 'Post ID', 'wp-document-revisions' ) . '</label></th>' .
 		'<td style="line-height:1.0; padding:5px 10px;margin-bottom:0;">' . $post->ID . '</td></tr>';
 
 		$output .=
-		'<th scope="row" style="line-height:1.0; padding:5px 10px;"><label for="labels-content">' . __( 'Content', 'wpdr-wpml-support' ) . '</label></th>' .
+		'<th scope="row" style="line-height:1.0; padding:5px 10px;"><label for="labels-content">' . __( 'Content', 'wp-document-revisions' ) . '</label></th>' .
 		'<td style="line-height:1.0; padding:5px 10px;margin-bottom:0;">' . esc_html( $post->post_content ) . '</td></tr>';
 
 		$revns = get_document_revisions( $post->ID );
 		// remove the document itself.
 		unset( $revns[0] );
 		if ( empty( $revns ) ) {
-			$list = __( 'No revisions', 'wpdr-wpml-support' );
+			$list = __( 'No revisions', 'wp-document-revisions' );
 		} else {
 			$list = '';
 			foreach ( $revns as $revn ) {
 				$rev_doc = $wpdr->extract_document_id( $revn->post_content );
-				$list   .= $revn->ID . '&nbsp;&nbsp;' . __( 'Attachment Document: ', 'wpdr-wpml-support' ) . $rev_doc . '<br />';
+				$list   .= $revn->ID . '&nbsp;&nbsp;' . __( 'Attachment Document: ', 'wp-document-revisions' ) . $rev_doc . '<br />';
 			}
 			$list = substr( $list, 0, -6 );
 		}
 
 		$output .=
-		'<th scope="row" style="line-height:1.0; padding:5px 10px;"><label for="labels-revisions">' . __( 'Revisions', 'wpdr-wpml-support' ) . '</label></th>' .
+		'<th scope="row" style="line-height:1.0; padding:5px 10px;"><label for="labels-revisions">' . __( 'Revisions', 'wp-document-revisions' ) . '</label></th>' .
 		'<td style="line-height:1.0; padding:5px 10px;margin-bottom:0;">' . $list . '</td></tr>';
 
 		$attachs = $wpdr->get_attachments( $post->ID );
 		if ( empty( $attachs ) ) {
-			$list = __( 'No attachments', 'wpdr-wpml-support' );
+			$list = __( 'No attachments', 'wp-document-revisions' );
 		} else {
 			$list = '';
 			foreach ( $attachs as $attach ) {
@@ -1094,7 +1060,7 @@ class WPDR_WPML_Support {
 					ARRAY_A,
 				);
 				if ( ! is_array( $copies ) || empty( $copies ) ) {
-					$sublist = __( 'No copies', 'wpdr-wpml-support' );
+					$sublist = __( 'No copies', 'wp-document-revisions' );
 				} else {
 					$sublist = implode( ', ', array_column( $copies, 'col' ) );
 				}
@@ -1102,17 +1068,17 @@ class WPDR_WPML_Support {
 				if ( ! empty( $meta ) ) {
 					$meta = '<br />' . $meta;
 				}
-				$list .= $attach->ID . '&nbsp;&nbsp;' . __( 'Copies (with parent): ', 'wpdr-wpml-support' ) . $sublist . $meta . '<br />';
+				$list .= $attach->ID . '&nbsp;&nbsp;' . __( 'Copies (with parent): ', 'wp-document-revisions' ) . $sublist . $meta . '<br />';
 			}
 			$list = substr( $list, 0, -6 );
 		}
 
 		$output .=
-		'<th scope="row" style="line-height:1.0; padding:5px 10px;"><label for="labels-attach">' . __( 'Attachments', 'wpdr-wpml-support' ) . '</label></th>' .
+		'<th scope="row" style="line-height:1.0; padding:5px 10px;"><label for="labels-attach">' . __( 'Attachments', 'wp-document-revisions' ) . '</label></th>' .
 		'<td style="line-height:1.0; padding:5px 10px;margin-bottom:0;">' . $list . '</td></tr>';
 
 		$output .=
-		'<th scope="row" style="line-height:1.0; padding:5px 10px;"><label for="labels-metadata">' . __( 'Meta data', 'wpdr-wpml-support' ) . '</label></th>' .
+		'<th scope="row" style="line-height:1.0; padding:5px 10px;"><label for="labels-metadata">' . __( 'Meta data', 'wp-document-revisions' ) . '</label></th>' .
 		'<td style="line-height:1.0; padding:5px 10px;margin-bottom:0;">' . $this->get_meta_data( $post ) . '</td></tr>';
 
 		$taxes = get_object_taxonomies( $post->post_type, 'objects' );
@@ -1131,7 +1097,7 @@ class WPDR_WPML_Support {
 		$list = substr( $list, 0, -6 );
 
 		$output .=
-		'<th scope="row" style="line-height:1.0; padding:5px 10px;"><label for="labels-terms">' . __( 'Terms', 'wpdr-wpml-support' ) . '</label></th>' .
+		'<th scope="row" style="line-height:1.0; padding:5px 10px;"><label for="labels-terms">' . __( 'Terms', 'wp-document-revisions' ) . '</label></th>' .
 		'<td style="line-height:1.0; padding:5px 10px;margin-bottom:0;">' . $list . '</td></tr>';
 
 		$output .= '</table></div>';
