@@ -237,72 +237,6 @@ class WPDR_WPML_Support {
 		if ( $wpdr_pil->lock_item( $number ) ) {
 			$data = $queue['data'];
 			// decode data.
-			write_log( $data );
-			$data = explode( '/', $data );
-
-			// process data.
-			switch ( true ) {
-				case ( 'No Translation Record' === $data[0] && 'insert' === $data[1] && 'post_document' === $data[2] ):
-					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-					$post_id = $wpdb->get_var(
-						$wpdb->prepare(
-							"SELECT element_id FROM {$wpdb->prefix}icl_translations WHERE translation_id = %d ",
-							$data[3]
-						),
-					);
-					write_log( $post_id );
-					if ( $post_id ) {
-						$this->check_fix_document( $post_id );
-						$processed = true;
-					}
-			}
-			$wpdr_pil->unlock_item( $number, $processed );
-		}
-	}
-
-	/**
-	 * Check the document structure.
-	 *
-	 * @since 0.5
-	 * @return void
-	 */
-	private function review_translations() {
-		$post_id = $this->find_post_id();
-		if ( is_null( $post_id ) ) {
-			return;
-		}
-		$this->check_fix_document( $post_id );
-	}
-
-	/**
-	 * Save Document, check/modify linkages.
-	 *
-	 * @since 0.5
-	 * @global $wpdb, $wpdr
-	 * @param int $doc_id the ID of the post being saved.
-	 * @return void
-	 */
-	public function save_post_document( $doc_id ) {
-		// autosave check.
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
-		}
-
-		// check this document.
-		$this->check_fix_document( $doc_id );
-
-		// is this original.
-		$orig = $this->get_original_translation( $doc_id );
-		if ( $orig !== $doc_id ) {
-			// translated document - only need to check this one.
-			write_log( 'save orig' );
-			return;
-		}
-
-		// original document - check the translations.
-		$trans = $this->get_orig_translations( $orig );
-		foreach ( $trans as $lang => $tran ) {
-			write_log( $tran );
 			$this->check_fix_document( $tran );
 		}
 	}
@@ -339,7 +273,6 @@ class WPDR_WPML_Support {
 				$attach = $latest->ID;
 			}
 		}
-		write_log( 'Latest:' . $doc_id . '/' . $attach );
 
 		// what is attached post.
 		$document = get_post( $doc_id );
@@ -366,7 +299,6 @@ class WPDR_WPML_Support {
 			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
 			wp_cache_delete( $doc_id, 'posts' );
 			clean_post_cache( $doc_id );
-			write_log( $doc_id . ' SQL: ' . $content );
 		} else {
 			// create revision.
 			$update = array(
@@ -374,7 +306,6 @@ class WPDR_WPML_Support {
 				'post_content' => $content,
 			);
 			wp_update_post( $update );
-			write_log( $doc_id . ' Revision: ' . $content );
 		}
 	}
 
@@ -397,7 +328,7 @@ class WPDR_WPML_Support {
 		if ( ! $wpdr->verify_post_type( $doc_id ) ) {
 			return;
 		}
-		write_log( 'translation_saved:' . $doc_id . '/' . $trid . '/' . $language_code . '/' . $source_language );
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$post_id = $wpdb->get_var(
 			$wpdb->prepare(
@@ -406,7 +337,6 @@ class WPDR_WPML_Support {
 				$language_code
 			),
 		);
-		write_log( 'translation_saved 2:' . $post_id );
 		$this->check_fix_document( $post_id );
 	}
 
@@ -419,8 +349,6 @@ class WPDR_WPML_Support {
 	 * @return void
 	 */
 	public function translation_update( $parms ) {
-		write_log( 'translation_update' );
-		write_log( $parms );
 		// only interested in posts.
 		if ( ! isset( $parms['context'] ) || 'post' !== $parms['context'] ) {
 			return;
@@ -444,7 +372,6 @@ class WPDR_WPML_Support {
 
 		global $wpdb, $wpdr;
 		if ( empty( $parms['element_id'] ) ) {
-			write_log( $parms['translation_id'] );
 			// can we get it from translation_id.
 			if ( isset( $parms['translation_id'] ) ) {
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -454,7 +381,6 @@ class WPDR_WPML_Support {
 						$parms['translation_id']
 					),
 				);
-				write_log( $post_id );
 				if ( ! $post_id ) {
 					// transaction record not found, write details for later processing.
 					$data = array(
@@ -466,7 +392,6 @@ class WPDR_WPML_Support {
 					$data = implode( '/', $data );
 					global $wpdr_pil;
 					$wpdr_pil->set_item( $data );
-					write_log( 'Write transaction_id: ' . $data );
 					return;
 				}
 				// found it.
@@ -476,7 +401,6 @@ class WPDR_WPML_Support {
 				if ( ! is_object( $post ) || is_null( $post ) || ! isset( $post->ID ) ) {
 					return;
 				}
-				write_log( $post->ID );
 				$parms['element_id'] = $post->ID;
 			}
 		}
@@ -490,7 +414,6 @@ class WPDR_WPML_Support {
 				$orig = $this->get_original_translation( $elid );
 				if ( $orig !== $elid && ! $this->post_in_shared_mode( $elid ) ) {
 					// Translated post, remove link in original content.
-					write_log( 'remove content' );
 					$id      = get_post( $elid );
 					$content = preg_replace( '/<!-- WPDR \s*\d+ -->/', '', $id->post_content );
 					// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
@@ -522,7 +445,6 @@ class WPDR_WPML_Support {
 					),
 					ARRAY_A,
 				);
-				write_log( $trans );
 				foreach ( $trans as $tran ) {
 					$this->check_fix_document( $tran['element_id'] );
 				}
@@ -537,7 +459,6 @@ class WPDR_WPML_Support {
 					// not a document or not yet linked.
 					return;
 				}
-				write_log( 'Check: ' . $parent . '/' . $elid );
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 				$recs   = $wpdb->get_var(
 					$wpdb->prepare(
@@ -547,10 +468,8 @@ class WPDR_WPML_Support {
 					),
 				);
 				$shared = $this->post_in_shared_mode( $parent );
-				write_log( 'other trid:' . $recs . '/' . +$shared );
 				if ( $recs > 0 && ! $shared ) {
 					// remove parent link.
-					write_log( 'Remove parent link' );
 					// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 					$res  = $wpdb->query(
 						$wpdb->prepare(
@@ -565,7 +484,6 @@ class WPDR_WPML_Support {
 				break;
 
 			case ( 'post_attachment' === $eltp && 'update' === $type ):
-				write_log( 'Update: ' . $elid );
 				break;
 
 			case ( 'post_attachment' === $eltp && 'before_delete' === $type ):
@@ -612,7 +530,7 @@ class WPDR_WPML_Support {
 					),
 					ARRAY_A,
 				);
-				write_log( $trans );
+
 				// delete attachment will delete the files but we don't want this process to do that.
 				// so mangle the file directory.
 				add_filter( 'upload_dir', array( $this, 'mangle_upload_dir' ), 1000, 1 );
@@ -641,14 +559,12 @@ class WPDR_WPML_Support {
 		if ( 'document' !== $post->post_type ) {
 			return $check;
 		}
-		write_log( 'pre_delete_post' );
 
 		// Only concerned with original post in shared mode.
 		$orig = $this->get_original_translation( $post->ID );
 		if ( $orig !== $post->ID || ! $this->post_in_shared_mode( $orig ) ) {
 			return $check;
 		}
-		write_log( 'original post in shared mode: ' . $orig . '/' . $post->ID );
 
 		global $wpdr_pil;
 		// Are there any outstanding transactions to process.
@@ -659,7 +575,6 @@ class WPDR_WPML_Support {
 
 		// Are there translations still.
 		if ( $this->do_translations_exist( $orig ) ) {
-			write_log( 'No go' );
 			return false;
 		}
 		return $check;
@@ -678,7 +593,6 @@ class WPDR_WPML_Support {
 			return;
 		}
 
-		write_log( 'before_delete_post' );
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$zeros = $wpdb->get_results(
@@ -697,8 +611,7 @@ class WPDR_WPML_Support {
 			// no zero parent records.
 			return;
 		}
-		write_log( 'zero records found' );
-		write_log( $zeros );
+
 		// delete attachment will delete the files but we don't want this process to do that.
 		// so mangle the file directory.
 		add_filter( 'upload_dir', array( $this, 'mangle_upload_dir' ), 1000, 1 );
@@ -848,7 +761,6 @@ class WPDR_WPML_Support {
 
 		// look up metadata.
 		$mode = get_post_meta( $orig, '_wpml_media_duplicate', true );
-		write_log( $post_id . '/' . $orig . '/' . $mode );
 		return (bool) $mode;
 	}
 
@@ -862,7 +774,6 @@ class WPDR_WPML_Support {
 	 */
 	private function do_translations_exist( $post_id ) {
 		// look up WPML data (join to post to make sure post not deleted).
-		write_log( 'do_translations_exist:' . $post_id );
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$tran = $wpdb->get_results(
@@ -873,7 +784,6 @@ class WPDR_WPML_Support {
 			),
 			ARRAY_A,
 		);
-		write_log( $tran );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$tran = $wpdb->get_var(
@@ -884,7 +794,6 @@ class WPDR_WPML_Support {
 				$post_id,
 			),
 		);
-		write_log( $tran );
 
 		if ( 0 === (int) $tran ) {
 			// no translation data.
@@ -957,7 +866,68 @@ class WPDR_WPML_Support {
 	/**
 	 * Helper function to provide help text as an array.
 	 *
+.5
+	 * @global $wpdb
+	 * @param int $orig_id the ID of the post being tested.
+	 * @return int[]
+	 */
+	private function get_orig_translations( $orig_id ) {
+		// look up WPML data.
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$tran = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT o.language_code, o.element_id FROM {$wpdb->prefix}icl_translations AS o " .
+				'WHERE o.source_language_code IS NOT NULL ' .
+				"AND o.trid = (SELECT m.trid FROM {$wpdb->prefix}icl_translations AS m WHERE m.element_id = %d AND m.source_language_code IS NULL )",
+				$orig_id,
+			),
+			ARRAY_A,
+		);
+
+		if ( ! is_array( $tran ) ) {
+			// no translation data so it is the original.
+			return array();
+		}
+		return wp_list_pluck( $tran, 'element_id', 'language_code' );
+	}
+
+	/*
+					FUNCTIONS ADDED FOR HELP TEXT DEBUG PROCESSING.
+					===============================================
+	*/
+
+	/**
+	 * Adds help tabs to help tab API.
+	 *
 	 * @since 0.5
+	 * @uses get_help_text()
+	 * @return void
+	 */
+	public function add_help_tab() {
+		$screen = get_current_screen();
+
+		// only interested in document post_types.
+		if ( 'document' !== $screen->post_type ) {
+			return;
+		}
+
+		// loop through each tab in the help array and add.
+		foreach ( $this->get_help_text( $screen ) as $title => $content ) {
+			$screen->add_help_tab(
+				array(
+					'title'   => $title,
+					'id'      => str_replace( ' ', '_', $title ),
+					'content' => $content,
+				)
+			);
+		}
+	}
+
+	/**
+	 * Helper function to provide help text as an array.
+	 *
+                       	 * @since 0.5
 	 * @param WP_Screen $screen (optional) the current screen.
 	 * @returns string[] the help text
 	 */
