@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <ruleset name="WordPress Coding Standards">
 	<extensions>*/php</extensions>
+	<extensions>*/*/php</extensions>
 	<rule ref="WordPress">
 		<exclude name="WordPress.Files.FileName.InvalidClassFileName" />
 	</rule>
