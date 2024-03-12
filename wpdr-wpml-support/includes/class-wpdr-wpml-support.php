@@ -884,10 +884,12 @@ class WPDR_WPML_Support {
 		// parent key is the id of the current screen
 		// child key is the title of the tab
 		// value is the help text (as HTML).
+		$call = __( 'WPML Calls', 'wp-document-revisions' );
+		$data = __( 'WPDR Data', 'wp-document-revisions' );
 		$help = array(
 			'document' => array(
-				__( 'WPML Calls', 'wp-document-revisions' ) => $this->get_wpml_data( $post ),
-				__( 'WPDR Data', 'wp-document-revisions' )  => $this->get_document_data( $post ),
+				$call => $this->get_wpml_data( $post ),
+				$data => $this->get_document_data( $post ),
 			),
 		);
 

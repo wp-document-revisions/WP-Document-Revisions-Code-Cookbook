@@ -174,7 +174,7 @@ class WPDR_Taxonomy_Permissions {
 	 * @param string $role the role being reviewed (all will be reviewed in turn).
 	 * @return array $caps the modified set of capabilities for the role.
 	 */
-	public function default_caps_filter( $caps, $role ) {
+	public function default_caps_filter( $caps, $role ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		// get terms in the selected taxonomy.
 		$terms = get_terms(
 			array(
@@ -203,7 +203,6 @@ class WPDR_Taxonomy_Permissions {
 		}
 
 		return $caps;
-		// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 	}
 
 	/**
