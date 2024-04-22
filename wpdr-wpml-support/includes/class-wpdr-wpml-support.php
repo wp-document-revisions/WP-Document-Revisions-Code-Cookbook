@@ -63,6 +63,13 @@ class WPDR_WPML_Support {
 		global $wpdr;
 		remove_action( 'admin_init', array( $wpdr->admin, 'filter_from_media' ) );
 		remove_filter( 'ajax_query_attachments_args', array( $wpdr->admin, 'filter_from_media_grid' ) );
+
+		// Add a modified WPDR filters to block Document attachments.
+		add_action( 'admin_init', array( &$this, 'filter_from_media' ) );
+		add_filter( 'ajax_query_attachments_args', array( $this, 'filter_from_media_grid' ) );
+
+		// ensure revision qv if document qv set.
+		add_filter( 'wpml_is_redirected', array( $this, 'wpml_prevent_redirect_for_document_revisions' ), 10, 3 );
 	}
 
 	/**
@@ -74,32 +81,28 @@ class WPDR_WPML_Support {
 	 */
 	public function admin_init() {
 		// sort the permalink for translated pages.
-		add_filter( 'document_home_url', array( &$this, 'set_wpml_home_url' ), 10, 3 );
+		add_filter( 'document_home_url', array( $this, 'set_wpml_home_url' ), 10, 3 );
 
 		// after post save.
-		add_action( 'save_post_document', array( &$this, 'save_post_document' ), 99 );
+		add_action( 'save_post_document', array( $this, 'save_post_document' ), 99 );
 
 		// after translation post save.
-		add_action( 'wpml_after_save_post', array( &$this, 'translation_saved' ), 10, 4 );
+		add_action( 'wpml_after_save_post', array( $this, 'translation_saved' ), 10, 4 );
 
 		// after translation action.
-		add_action( 'wpml_translation_update', array( &$this, 'translation_update' ), 20 );
+		add_action( 'wpml_translation_update', array( $this, 'translation_update' ), 20 );
+
+		// check whether to create revision.
+		add_action( 'wp_save_post_revision_post_has_changed', array( $this, 'suppress_revision' ), 5, 3 );
 
 		// delete post. Make sure for shared attachment documents the original is deleted last.
-		add_action( 'pre_delete_post', array( &$this, 'pre_delete_post' ), 5, 3 );
+		add_action( 'pre_delete_post', array( $this, 'pre_delete_post' ), 5, 3 );
 
 		// delete post. Make sure translated attachments without parents are deleted (but not files).
-		add_action( 'before_delete_post', array( &$this, 'before_delete_post' ), 5, 2 );
-
-		// support languages.
-		load_plugin_textdomain( 'wp-document-revisions', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+		add_action( 'before_delete_post', array( $this, 'before_delete_post' ), 5, 2 );
 
 		// help and messages.
 		add_action( 'admin_head', array( $this, 'add_help_tab' ) );
-
-		// Add a modified WPDR filters to block Document attachments.
-		add_action( 'admin_init', array( &$this, 'filter_from_media' ) );
-		add_filter( 'ajax_query_attachments_args', array( $this, 'filter_from_media_grid' ) );
 
 		global $wpdr_pil;
 		// process any outstanding transactions.
@@ -237,6 +240,71 @@ class WPDR_WPML_Support {
 		if ( $wpdr_pil->lock_item( $number ) ) {
 			$data = $queue['data'];
 			// decode data.
+			$data = explode( '/', $data );
+
+			// process data.
+			switch ( true ) {
+				case ( 'No Translation Record' === $data[0] && 'insert' === $data[1] && 'post_document' === $data[2] ):
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+					$post_id = $wpdb->get_var(
+						$wpdb->prepare(
+							"SELECT element_id FROM {$wpdb->prefix}icl_translations WHERE translation_id = %d ",
+							$data[3]
+						),
+					);
+					if ( $post_id ) {
+						// find if we need to update by creating a revision (or not).
+						$orig = $this->get_original_translation( $post_id );
+						$sql  = ( $orig === $post_id || ! $this->post_in_shared_mode( $orig ) );
+						$this->check_fix_document( $post_id, null, $sql );
+						$processed = true;
+					}
+			}
+			$wpdr_pil->unlock_item( $number, $processed );
+		}
+	}
+
+	/**
+	 * Check the document structure.
+	 *
+	 * @since 0.5
+	 * @return void
+	 */
+	private function review_translations() {
+		$post_id = $this->find_post_id();
+		if ( is_null( $post_id ) ) {
+			return;
+		}
+		$this->check_fix_document( $post_id );
+	}
+
+	/**
+	 * Save Document, check/modify linkages.
+	 *
+	 * @since 0.5
+	 * @global $wpdb, $wpdr
+	 * @param int $doc_id the ID of the post being saved.
+	 * @return void
+	 */
+	public function save_post_document( $doc_id ) {
+		// autosave check.
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+
+		// check this document.
+		$this->check_fix_document( $doc_id );
+
+		// is this original.
+		$orig = $this->get_original_translation( $doc_id );
+		if ( $orig !== $doc_id ) {
+			// translated document - only need to check this one.
+			return;
+		}
+
+		// original document - check the translations.
+		$trans = $this->get_orig_translations( $orig );
+		foreach ( $trans as $lang => $tran ) {
 			$this->check_fix_document( $tran );
 		}
 	}
@@ -289,13 +357,12 @@ class WPDR_WPML_Support {
 		if ( $sql ) {
 			global $wpdb;
 			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
-			$post_table = "{$wpdb->prefix}posts";
-			$sql        = $wpdb->prepare(
-				"UPDATE `$post_table` SET `post_content` = %s WHERE `id` = %d ",
+			$sql = $wpdb->prepare(
+				"UPDATE `$wpdb->posts` SET `post_content` = %s WHERE `id` = %d ",
 				$content,
 				$doc_id,
 			);
-			$res        = $wpdb->query( $sql );
+			$res = $wpdb->query( $sql );
 			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
 			wp_cache_delete( $doc_id, 'posts' );
 			clean_post_cache( $doc_id );
@@ -306,6 +373,8 @@ class WPDR_WPML_Support {
 				'post_content' => $content,
 			);
 			wp_update_post( $update );
+			wp_cache_delete( $doc_id, 'document_revisions' );
+			wp_cache_delete( $doc_id, 'document_revisions_indices' );
 		}
 	}
 
@@ -418,13 +487,14 @@ class WPDR_WPML_Support {
 					$content = preg_replace( '/<!-- WPDR \s*\d+ -->/', '', $id->post_content );
 					// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
 					$sql = $wpdb->prepare(
-						"UPDATE `{$wpdb->prefix}posts` SET `post_content` = %s WHERE `id` = %d ",
+						"UPDATE `$wpdb->posts` SET `post_content` = %s WHERE `id` = %d ",
 						$content,
 						$elid
 					);
 					$res = $wpdb->query( $sql );
 					// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
 					wp_cache_delete( $elid, 'posts' );
+					clean_post_cache( $elid );
 					break;
 				}
 				$this->check_fix_document( $elid );
@@ -471,12 +541,16 @@ class WPDR_WPML_Support {
 				if ( $recs > 0 && ! $shared ) {
 					// remove parent link.
 					// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-					$res  = $wpdb->query(
+					$res = $wpdb->query(
 						$wpdb->prepare(
-							"UPDATE `{$wpdb->prefix}posts` SET `post_parent` = 0 WHERE `id` = %d ",
+							"UPDATE `$wpdb->posts` SET `post_parent` = 0 WHERE `id` = %d ",
 							$elid,
 						)
 					);
+					wp_cache_delete( $elid, 'posts' );
+					wp_cache_delete( $elid, 'document_revisions' );
+					wp_cache_delete( $elid, 'document_revisions_indices' );
+					clean_post_cache( $elid );
 					$elid = null;
 				}
 				// create a revision record if shared.
@@ -522,7 +596,7 @@ class WPDR_WPML_Support {
 				$trans = $wpdb->get_results(
 					$wpdb->prepare(
 						"SELECT element_id FROM {$wpdb->prefix}icl_translations " .
-						"INNER JOIN {$wpdb->prefix}posts ON ID = element_id " .
+						"INNER JOIN $wpdb->posts ON ID = element_id " .
 						'WHERE element_id != %d AND post_parent = 0 AND ' .
 						"trid = ( SELECT trid FROM {$wpdb->prefix}icl_translations WHERE element_id = %d ) ",
 						$elid,
@@ -533,19 +607,71 @@ class WPDR_WPML_Support {
 
 				// delete attachment will delete the files but we don't want this process to do that.
 				// so mangle the file directory.
-				add_filter( 'upload_dir', array( $this, 'mangle_upload_dir' ), 1000, 1 );
+				add_filter( 'wp_delete_file', array( $this, 'mangle_file_name' ), 1000, 1 );
 				foreach ( $trans as $tran ) {
 					wp_delete_attachment( $tran['element_id'] );
 				}
-				remove_filter( 'upload_dir', array( $this, 'mangle_upload_dir' ), 1000, 1 );
+				remove_filter( 'wp_delete_file', array( $this, 'mangle_file_name' ), 1000, 1 );
 				break;
 		}
 	}
 
 	/**
-	 * Mangle the document directory so that the files are not deleted (by this process).
+	 * To avoid double revisions, check that we have not already created a revision to get the document correct.
 	 *
-	 * Delete zero parent attachments where we are about to delete the actual file.
+	 * @since 0.5
+	 * @global $wpdr, $wpdb
+	 *
+	 * @param bool    $post_has_changed Whether the post has changed.
+	 * @param WP_Post $latest_revision  The latest revision post object.
+	 * @param WP_Post $post             The post object.
+	 * @return bool
+	 */
+	public function suppress_revision( $post_has_changed, $latest_revision, $post ) { // phpcs:ignore
+		// only documents and we want to check.
+		if ( 'document' !== $post->post_type || ! $post_has_changed ) {
+			return $post_has_changed;
+		}
+
+		global $wpdr;
+		$latest_r = $wpdr->extract_document_id( $latest_revision->post_content );
+		$latest_p = $wpdr->extract_document_id( $post->post_content );
+
+		// create revision if attached document changed.
+		if ( $latest_p !== $latest_r ) {
+			return $post_has_changed;
+		}
+
+		// Is the latest revision more than x seconds old.
+		// note. both times have implicit current time zone.
+		$age = time() - strtotime( $latest_revision->post_date_gmt );
+		if ( $age > apply_filters( 'wpdr_wpml_revision_age', 60 ) ) {
+			return $post_has_changed;
+		}
+
+		// apply any change via SQL to latest revision.
+		global $wpdb;
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
+		$sql = $wpdb->prepare(
+			"UPDATE `$wpdb->posts` " .
+			' SET `post_title` = %s, `post_content` = %s, `post_excerpt` = %s WHERE `id` = %d ',
+			$post->post_title,
+			$post->post_content,
+			$post->post_excerpt,
+			$latest_revision->ID,
+		);
+		$res = $wpdb->query( $sql );
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
+		wp_cache_delete( $latest_revision->ID, 'posts' );
+		wp_cache_delete( $post->ID, 'document_revisions' );
+		wp_cache_delete( $post->ID, 'document_revisions_indices' );
+		clean_post_cache( $latest_revision->ID );
+
+		return false;
+	}
+
+	/**
+	 * Don't delete an original document in shared mode if a translation exists.
 	 *
 	 * @since 0.5
 	 * @global $wpdr_pil
@@ -597,10 +723,10 @@ class WPDR_WPML_Support {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$zeros = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT x.ID FROM {$wpdb->prefix}posts AS p " .
+				"SELECT x.ID FROM $wpdb->posts AS p " .
 				"INNER JOIN {$wpdb->prefix}icl_translations t ON t.element_type = 'post_attachment' AND t.element_id = p.ID " .
 				"INNER JOIN {$wpdb->prefix}icl_translations z ON z.trid = t.trid " .
-				"INNER JOIN {$wpdb->prefix}posts x ON x.ID = z.element_id " .
+				"INNER JOIN $wpdb->posts x ON x.ID = z.element_id " .
 				"WHERE p.post_parent = %d AND p.post_type = 'attachment' AND t.source_language_code IS NULL AND x.post_parent = 0 ",
 				$postid,
 			),
@@ -614,27 +740,25 @@ class WPDR_WPML_Support {
 
 		// delete attachment will delete the files but we don't want this process to do that.
 		// so mangle the file directory.
-		add_filter( 'upload_dir', array( $this, 'mangle_upload_dir' ), 1000, 1 );
+		add_filter( 'wp_delete_file', array( $this, 'mangle_file_name' ), 1000, 1 );
 		foreach ( $zeros as $zero ) {
-			wp_delete_attachment( $zero['post_id'] );
+			wp_delete_attachment( $zero['ID'] );
 		}
-		remove_filter( 'upload_dir', array( $this, 'mangle_upload_dir' ), 1000, 1 );
+		remove_filter( 'wp_delete_file', array( $this, 'mangle_file_name' ), 1000, 1 );
 	}
 
 	/**
-	 * Mangle the document directory so that the files are not deleted (by this process).
+	 * Mangle the file name so that the files are not deleted (by this process).
 	 *
 	 * Called after the original has been deleted..
 	 *
 	 * @since 0.5
-	 * @param array $dir defaults passed from WP.
-	 * @return array $dir modified directory
+	 * @param string $file File name to delete.
+	 * @return string $file Mmamgled file name.
 	 */
-	public function mangle_upload_dir( $dir ) {
-		// Even though this is the standard directory, we need to make it non-existant.
-		$dir['basedir'] = $dir['basedir'] . '/notexist';
-		$dir['path']    = $dir['basedir'] . $dir['subdir'];
-		return $dir;
+	public function mangle_file_name( $file ) {
+		// We need to make the file non-existant.
+		return $file . '.notexist';
 	}
 
 	/**
@@ -681,6 +805,59 @@ class WPDR_WPML_Support {
 				'}' .
 				'document.addEventListener("DOMContentLoaded", wpdr_wpml() );';
 			wp_add_inline_script( 'media-upload', $script );
+		}
+	}
+
+	/**
+	 * Ensure existing post used for revision query.
+	 *
+	 * Thanks to WPML for support.
+	 *
+	 * @since 0.5
+	 * @param string | bool $redirect Whether to redirect to the WPML query.
+	 * @param int           $post_id  Post ID..
+	 * @param WP_Query      $query    The WP_Query instance.
+	 */
+	public function wpml_prevent_redirect_for_document_revisions( $redirect, $post_id, $query ) {
+		$q = $query->query;
+		if ( 'document' === $q['post_type'] && isset( $q['document'], $q['revision'] ) ) {
+			// Return false to prevent redirect.
+			return false;
+		}
+
+		// Return the original redirect status if conditions are not met.
+		return $redirect;
+	}
+
+	/*
+					FUNCTIONS ADDED FOR HELP TEXT DEBUG PROCESSING.
+					===============================================
+	*/
+
+	/**
+	 * Adds help tabs to help tab API.
+	 *
+	 * @since 0.5
+	 * @uses get_help_text()
+	 * @return void
+	 */
+	public function add_help_tab() {
+		$screen = get_current_screen();
+
+		// only interested in document post_types.
+		if ( 'document' !== $screen->post_type ) {
+			return;
+		}
+
+		// loop through each tab in the help array and add.
+		foreach ( $this->get_help_text( $screen ) as $title => $content ) {
+			$screen->add_help_tab(
+				array(
+					'title'   => $title,
+					'id'      => str_replace( ' ', '_', $title ),
+					'content' => $content,
+				)
+			);
 		}
 	}
 
@@ -775,22 +952,13 @@ class WPDR_WPML_Support {
 	private function do_translations_exist( $post_id ) {
 		// look up WPML data (join to post to make sure post not deleted).
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$tran = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT element_id, source_language_code, IFNULL(source_language_code,'null') as lang, (SELECT ID FROM {$wpdb->prefix}posts as p where p.ID = o.element_id) as ID FROM {$wpdb->prefix}icl_translations AS o " .
-				"WHERE o.trid = (SELECT m.trid FROM {$wpdb->prefix}icl_translations AS m WHERE m.element_id = %d )",
-				$post_id,
-			),
-			ARRAY_A,
-		);
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$tran = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(source_language_code) FROM {$wpdb->prefix}icl_translations AS o " .
 				"WHERE o.trid = (SELECT m.trid FROM {$wpdb->prefix}icl_translations AS m WHERE m.element_id = %d )" .
-				"AND EXISTS (SELECT NULL FROM {$wpdb->prefix}posts AS p WHERE p.ID = o.element_id) ",
+				"AND EXISTS (SELECT NULL FROM $wpdb->posts AS p WHERE p.ID = o.element_id) ",
 				$post_id,
 			),
 		);
@@ -831,38 +999,6 @@ class WPDR_WPML_Support {
 		return wp_list_pluck( $tran, 'element_id', 'language_code' );
 	}
 
-	/*
-					FUNCTIONS ADDED FOR HELP TEXT DEBUG PROCESSING.
-					===============================================
-	*/
-
-	/**
-	 * Adds help tabs to help tab API.
-	 *
-	 * @since 0.5
-	 * @uses get_help_text()
-	 * @return void
-	 */
-	public function add_help_tab() {
-		$screen = get_current_screen();
-
-		// only interested in document post_types.
-		if ( 'document' !== $screen->post_type ) {
-			return;
-		}
-
-		// loop through each tab in the help array and add.
-		foreach ( $this->get_help_text( $screen ) as $title => $content ) {
-			$screen->add_help_tab(
-				array(
-					'title'   => $title,
-					'id'      => str_replace( ' ', '_', $title ),
-					'content' => $content,
-				)
-			);
-		}
-	}
-
 	/**
 	 * Helper function to provide help text as an array.
 	 *
@@ -884,12 +1020,10 @@ class WPDR_WPML_Support {
 		// parent key is the id of the current screen
 		// child key is the title of the tab
 		// value is the help text (as HTML).
-		$call = __( 'WPML Calls', 'wp-document-revisions' );
-		$data = __( 'WPDR Data', 'wp-document-revisions' );
 		$help = array(
 			'document' => array(
-				$call => $this->get_wpml_data( $post ),
-				$data => $this->get_document_data( $post ),
+				__( 'WPML Calls', 'wp-document-revisions' ) => $this->get_wpml_data( $post ),
+				__( 'WPDR Data', 'wp-document-revisions' )  => $this->get_document_data( $post ),
 			),
 		);
 
@@ -998,7 +1132,7 @@ class WPDR_WPML_Support {
 		'<th scope="row" style="line-height:1.0; padding:5px 10px;"><label for="labels-content">' . __( 'Content', 'wp-document-revisions' ) . '</label></th>' .
 		'<td style="line-height:1.0; padding:5px 10px;margin-bottom:0;">' . esc_html( $post->post_content ) . '</td></tr>';
 
-		$revns = get_document_revisions( $post->ID );
+		$revns = $wpdr->get_revisions( $post->ID );
 		// remove the document itself.
 		unset( $revns[0] );
 		if ( empty( $revns ) ) {
@@ -1026,7 +1160,7 @@ class WPDR_WPML_Support {
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 				$copies = $wpdb->get_results(
 					$wpdb->prepare(
-						"SELECT CONCAT( p.ID, ' (', p.post_parent, ')' ) AS col FROM {$wpdb->posts} as p " .
+						"SELECT CONCAT( p.ID, ' (', p.post_parent, ')' ) AS col FROM $wpdb->posts as p " .
 						"INNER JOIN {$wpdb->prefix}icl_translations AS o ON p.ID = o.element_id " .
 						"WHERE ID != %d AND o.trid = (SELECT m.trid FROM {$wpdb->prefix}icl_translations AS m WHERE m.element_id = %d )",
 						$attach->ID,

@@ -26,6 +26,6 @@ See [addition information](./readme.md) for how to use it.
 == Changelog ==
 
 = 0.5 =
-Release date: March 15, 2024
+Release date: April 22, 2024
 
 * Initial release

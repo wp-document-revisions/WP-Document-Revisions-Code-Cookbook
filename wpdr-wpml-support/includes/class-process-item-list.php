@@ -61,7 +61,8 @@ class Process_Item_List {
 			wp_die( esc_html__( 'Class Process_Item_List needs to be called with a parameter', 'process-item-list' ) );
 		}
 
-		self::$list_name = WP_CONTENT_DIR . '/' . $list_name . '/';
+		$uploads         = ( defined( 'UPLOADS' ) ? trailingslashit( UPLOADS ) : trailingslashit( WP_CONTENT_DIR ) . 'uploads/' );
+		self::$list_name = $uploads . $list_name . '/';
 
 		// make sure the directory exists.
 		if ( ! file_exists( self::$list_name ) ) {
