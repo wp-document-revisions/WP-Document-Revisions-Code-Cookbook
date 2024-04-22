@@ -1023,7 +1023,7 @@ class WPDR_WPML_Support {
 		$help = array(
 			'document' => array(
 				__( 'WPML Calls', 'wp-document-revisions' ) => $this->get_wpml_data( $post ),
-				__( 'WPDR Data', 'wp-document-revisions' )  => $this->get_document_data( $post ),
+				__( 'WPDR Data', 'wp-document-revisions' ) => $this->get_document_data( $post ),
 			),
 		);
 

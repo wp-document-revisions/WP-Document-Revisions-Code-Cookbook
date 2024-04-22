@@ -25,10 +25,10 @@ if ( ! in_array( 'wp-document-revisions/wp-document-revisions.php', apply_filter
 	if ( is_admin() ) {
 		echo wp_kses_post( '<div class="notice notice-warning is-dismissible"><p>' );
 		// translators: Do not translate WPML Support for WP Document Revisions or WP Document Revisions.
-		esc_html_e( 'Plugin WPML Support for WP Document Revisions is activated but its required plugin WP Document Revisions is not.', 'wpdr-wpml-debug' );
+		esc_html_e( 'Plugin WPML Support for WP Document Revisions is activated but its required plugin WP Document Revisions is not.', 'wp-document-revisions' );
 		echo wp_kses_post( '</p><p>' );
 		// translators: Do not translate WPML Support for WP Document Revisions.
-		esc_html_e( 'Plugin WPML Support for WP Document Revisions will not activate its functionality.', 'wpdr-wpml-debug' );
+		esc_html_e( 'Plugin WPML Support for WP Document Revisions will not activate its functionality.', 'wp-document-revisions' );
 		echo wp_kses_post( '</p></div>' );
 	}
 	return;
