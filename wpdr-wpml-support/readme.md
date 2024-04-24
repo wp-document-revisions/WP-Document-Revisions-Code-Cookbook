@@ -1,5 +1,23 @@
 # WP Document Revisions - WPML Support
 
+## Simplified Data Structure of WP Document Revisions
+
+WP Document Revisions makes use of a custom post type `document` that be associated with a document file (e.g. pdf) that can be uploaded and linked to the document.
+
+The upload process makes use of the standard media attachment process that creates an `attachment` post type and is the actual linkage to the document file.
+
+To support the concept of revisions, the plugin puts the id of the attachment in the `post_content` field and revisions are automatically created when the `post_content` field is changed.
+
+Hence an accessible history of all the versions of the attached document file can be maintained.
+
+## WPML Processing
+
+WPML will create translated post records (either documents (and so its revisions) and its attachments. It does not address the document files themselves.
+
+## Role of this Plugin  
+
+WPML does not know of the internal linkages of the `post_content` field holding the attachment identifier. So this plugin tries to ensure that this field is maintained correctly.
+
 ## Type of Support
 
 If WPML is implemented, there are two modes of operation that can be used with Document posts:
@@ -32,3 +50,8 @@ New uploads of the document file have to be uploaded via the Translated post.
 
 Logically the Main and Translated posts are tied together for WPML processing, they are independent as far as the document attachments are concerned.
 
+## Debug capability
+
+Since the role of the plugin is to make sure that the linkages are set correctly, to help know the data relationships the document post structure is made available.
+
+This is held in the help pull-down from the document edit screen where additional tab areas have been created.

@@ -4,7 +4,7 @@ Tags: documents, document management, access, roles
 Requires at least: 4.9
 Requires PHP: 7.4
 Requires Plugins: wp-document-revisions, members
-Tested up to: 6.4
+Tested up to: 6.5
 Stable tag: 1.0
 License: GPLv3 or later
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
@@ -31,7 +31,7 @@ This means that it is always necessary to have the Document Revisions permission
 == Installation ==
 
 1. Download the Cookbook code from GitHub
-2. Copy the `wpdr-role-permissions` directory to your plugins directory
+2. Copy the `wpdr-role-permissions` directory to your plugins directory. This can be done by creating a zip file of the directory and loading that as a plugin.
 3. Activate the plugin through the 'Plugins' menu in WordPress
 
 == Role Permissions for WP Document Revisions Filters ==
