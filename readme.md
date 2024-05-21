@@ -1,4 +1,4 @@
-Sample code to help customize WP Document Revisions. Once adapted to your organizations needs the files in the cookbook should be dropped into your /wp-content/plugins/ directory (or a sub-directory thereof) and activated like any plugin would.
+Sample code to help customize WP Document Revisions. Once adapted to your needs the files in the cookbook should be dropped into your /wp-content/plugins/ directory (or a sub-directory thereof) and activated like any plugin would be.
 
 1. **Third Party Encryption** - example of how to integrate at rest encryption using third-party tools
 1. **Audit Trail** - creates check in / check out audit trail
@@ -16,7 +16,7 @@ Integration plugins that will integrate WP Document Revisions with other plugins
 1. **Role Permissions** - Integrates the Members plugin Content Permissions functionality into WP Document Revisions to provide role based document access.
 1. **WPML Support** - Integrates WPML with WP Document Revisions to provide multi-language documents.
 
-To use these plugins, the specific directory should be zipped (i.e. a single compressed file) and then loaded as a plugin and activated.
+To use these integration plugins, the specific directory should be zipped (i.e. a single compressed file) and then loaded as a plugin and activated.
 
 Code Cookbook Alumni (Deprecated functions now included with the plugin by default):
 
