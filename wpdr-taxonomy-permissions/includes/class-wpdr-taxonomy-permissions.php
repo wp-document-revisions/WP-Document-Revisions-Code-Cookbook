@@ -174,9 +174,14 @@ class WPDR_Taxonomy_Permissions {
 	 * @param string $role the role being reviewed (all will be reviewed in turn).
 	 * @return array $caps the modified set of capabilities for the role.
 	 */
-	public function default_caps_filter( $caps, $role ) {
+	public function default_caps_filter( $caps, $role ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		// get terms in the selected taxonomy.
-		$terms = get_terms( $this->taxonomy, array( 'hide_empty' => false ) );
+		$terms = get_terms(
+			array(
+				'taxonomy'   => $this->taxonomy,
+				'hide_empty' => false,
+			)
+		);
 
 		// build out term specific caps.
 		foreach ( $caps as $cap => $grant ) {
@@ -367,7 +372,12 @@ class WPDR_Taxonomy_Permissions {
 			$allcaps = $user->allcaps;
 
 			// get terms in the selected taxonomy.
-			$terms = get_terms( $this->taxonomy, array( 'hide_empty' => false ) );
+			$terms = get_terms(
+				array(
+					'taxonomy'   => $this->taxonomy,
+					'hide_empty' => false,
+				)
+			);
 
 			// See any caps exist for user in term.
 			$user_terms = array();
@@ -394,32 +404,30 @@ class WPDR_Taxonomy_Permissions {
 				} else {
 					$user_tax_query = 'No access';
 				}
+			} elseif ( apply_filters( 'document_access_with_no_term', false ) ) {
+				// Can access documents with no taxonomy term.
+				$user_tax_query = array(
+					array(
+						'taxonomy' => $this->taxonomy,
+						'field'    => 'term_taxonomy_id',
+						'terms'    => $user_terms,
+						'operator' => 'IN',
+					),
+					array(
+						'taxonomy' => $this->taxonomy,
+						'operator' => 'NOT EXISTS',
+					),
+					'relation' => 'OR',
+				);
 			} else {
-				if ( apply_filters( 'document_access_with_no_term', false ) ) {
-					// Can access documents with no taxonomy term.
-					$user_tax_query = array(
-						array(
-							'taxonomy' => $this->taxonomy,
-							'field'    => 'term_taxonomy_id',
-							'terms'    => $user_terms,
-							'operator' => 'IN',
-						),
-						array(
-							'taxonomy' => $this->taxonomy,
-							'operator' => 'NOT EXISTS',
-						),
-						'relation' => 'OR',
-					);
-				} else {
-					$user_tax_query = array(
-						array(
-							'taxonomy' => $this->taxonomy,
-							'field'    => 'term_taxonomy_id',
-							'terms'    => $user_terms,
-							'operator' => 'IN',
-						),
-					);
-				}
+				$user_tax_query = array(
+					array(
+						'taxonomy' => $this->taxonomy,
+						'field'    => 'term_taxonomy_id',
+						'terms'    => $user_terms,
+						'operator' => 'IN',
+					),
+				);
 			}
 
 			wp_cache_set( 'wpdr_tax_query_' . $user->ID, $user_tax_query, '', ( WP_DEBUG ? 10 : 120 ) );
@@ -530,12 +538,10 @@ class WPDR_Taxonomy_Permissions {
 
 			if ( is_array( $results ) ) {
 				$query->found_posts = count( $results );
+			} elseif ( null === $results ) {
+				$query->found_posts = 0;
 			} else {
-				if ( null === $results ) {
-					$query->found_posts = 0;
-				} else {
-					$query->found_posts = 1;
-				}
+				$query->found_posts = 1;
 			}
 		}
 		return $results;
@@ -629,9 +635,7 @@ class WPDR_Taxonomy_Permissions {
 						// translators: %s is the taxonomy.
 						echo esc_html( sprintf( __( 'WPDR Taxonomy Permissions requires published documents to have only one term entered for taxonomy %s.', 'wp-document-revisions' ), $this->taxonomy ) );
 						break;
-					default:
-						null;
-				};
+				}
 				?>
 				</p>
 				<p><?php esc_html_e( 'Your update has been cancelled and data is in its original state.', 'wp-document-revisions' ); ?></p>
