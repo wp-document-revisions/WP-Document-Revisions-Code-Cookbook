@@ -3,7 +3,7 @@
 Plugin Name: WP Document Revisions - Filtering by Filetype
 Plugin URI: https://github.com/wp-document-revisions/WP-Document-Revisions-Code-Cookbook
 Description: Code sample to demonstrate how to build a filter by filetype taxonomy
-Version: 1.0
+Version: 2.0
 Author: Benjamin J. Balter
 Author URI: http://ben.balter.com
 License: GPL2
@@ -33,7 +33,7 @@ function wpdr_register_filetype_taxonomy() {
 	}
 }
 
-add_action( 'init', 'wpdr_register_filetype_taxonomy' );
+add_action( 'init', 'wpdr_register_filetype_taxonomy', 99 );
 
 /**
  * Saves the filetype terms from the post.
@@ -54,14 +54,15 @@ function wpdr_update_type( $post_ID ) {
 
 	$post = get_post( $post_ID );
 	// is there an attachment (new post).
-	if ( empty( $post->post_content ) || ! is_numeric( $post->post_content ) ) {
+	$attach = $wpdr->extract_document_id( $post->post_content )
+	if ( ! $attach ) {
 		return;
 	}
 
-	$attachment = get_post( $post->post_content );
-	$extensions = array( $wpdr->get_extension( get_attached_file( $attachment->ID ) ) );
+	// find the attachment filetype.
+	$extensions = array( $wpdr->get_extension( get_attached_file( $attach ) ) );
 
 	wp_set_post_terms( $post_ID, $extensions, 'filetype', false );
 }
 
-add_action( 'save_post', 'wpdr_update_type', 10, 1 );
+add_action( 'save_post_document', 'wpdr_update_type', 10, 1 );
