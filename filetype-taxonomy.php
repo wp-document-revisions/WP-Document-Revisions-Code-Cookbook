@@ -54,7 +54,7 @@ function wpdr_update_type( $post_ID ) {
 
 	$post = get_post( $post_ID );
 	// is there an attachment (new post).
-	$attach = $wpdr->extract_document_id( $post->post_content )
+	$attach = $wpdr->extract_document_id( $post->post_content );
 	if ( ! $attach ) {
 		return;
 	}
