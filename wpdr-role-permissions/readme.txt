@@ -4,7 +4,7 @@ Tags: documents, document management, access, roles
 Requires at least: 4.9
 Requires PHP: 7.4
 Requires Plugins: wp-document-revisions, members
-Tested up to: 6.5
+Tested up to: 6.8
 Stable tag: 1.0
 License: GPLv3 or later
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
