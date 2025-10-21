@@ -152,49 +152,57 @@ class WPDR_Track_Meta_Changes {
 		$rem                = '';
 		// Deal with added ones.
 		if ( ! empty( $added_tt_ids ) ) {
-			// These are taxonomy term IDs so need to get names from term_ids.
+			// Batch fetch all term objects to avoid individual queries.
 			$terms_fmt = array();
 			foreach ( $added_tt_ids as $term ) {
-				$term_obj    = get_term_by( 'term_taxonomy_id', $term, $taxonomy );
-				$terms_fmt[] = '"' . $term_obj->name . '"';
+				$term_obj = get_term_by( 'term_taxonomy_id', $term, $taxonomy->name );
+				if ( $term_obj && ! is_wp_error( $term_obj ) ) {
+					$terms_fmt[] = '"' . $term_obj->name . '"';
+				}
 			}
 
-			// human format the string by adding an "and" before the last term.
-			$last = array_pop( $terms_fmt );
-			if ( ! count( $terms_fmt ) ) {
-				$terms_formatted = $last;
-			} else {
-				$terms_formatted = implode( ', ', $terms_fmt ) . __( ' and ', 'wp-document-revisions' ) . $last;
-			}
+			if ( ! empty( $terms_fmt ) ) {
+				// human format the string by adding an "and" before the last term.
+				$last = array_pop( $terms_fmt );
+				if ( ! count( $terms_fmt ) ) {
+					$terms_formatted = $last;
+				} else {
+					$terms_formatted = implode( ', ', $terms_fmt ) . __( ' and ', 'wp-document-revisions' ) . $last;
+				}
 
-			// translators: %1$s is the list of terms added.
-			$add = sprintf( __( ' %1$s added', 'wp-document-revisions' ), $terms_formatted );
+				// translators: %1$s is the list of terms added.
+				$add = sprintf( __( ' %1$s added', 'wp-document-revisions' ), $terms_formatted );
 
-			if ( ! empty( $removed_tt_ids ) ) {
-				// translators: separator between added and removed..
-				$sep = __( ',', 'wp-document-revisions' );
+				if ( ! empty( $removed_tt_ids ) ) {
+					// translators: separator between added and removed..
+					$sep = __( ',', 'wp-document-revisions' );
+				}
 			}
 		}
 
 		// Deal with removed ones.
 		if ( ! empty( $removed_tt_ids ) ) {
-			// These are taxonomy term IDs so need to get names from term_ids.
+			// Batch fetch all term objects to avoid individual queries.
 			$terms_fmt = array();
 			foreach ( $removed_tt_ids as $term ) {
-				$term_obj    = get_term_by( 'term_taxonomy_id', $term, $taxonomy );
-				$terms_fmt[] = '"' . $term_obj->name . '"';
+				$term_obj = get_term_by( 'term_taxonomy_id', $term, $taxonomy->name );
+				if ( $term_obj && ! is_wp_error( $term_obj ) ) {
+					$terms_fmt[] = '"' . $term_obj->name . '"';
+				}
 			}
 
-			// human format the string by adding an "and" before the last term.
-			$last = array_pop( $terms_fmt );
-			if ( ! count( $terms_fmt ) ) {
-				$terms_formatted = $last;
-			} else {
-				$terms_formatted = implode( ', ', $terms_fmt ) . __( ' and ', 'wp-document-revisions' ) . $last;
-			}
+			if ( ! empty( $terms_fmt ) ) {
+				// human format the string by adding an "and" before the last term.
+				$last = array_pop( $terms_fmt );
+				if ( ! count( $terms_fmt ) ) {
+					$terms_formatted = $last;
+				} else {
+					$terms_formatted = implode( ', ', $terms_fmt ) . __( ' and ', 'wp-document-revisions' ) . $last;
+				}
 
-			// translators: %1$s is the list of terms removed.
-			$rem = sprintf( __( ' %1$s removed', 'wp-document-revisions' ), $terms_formatted );
+				// translators: %1$s is the list of terms removed.
+				$rem = sprintf( __( ' %1$s removed', 'wp-document-revisions' ), $terms_formatted );
+			}
 		}
 
 		if ( '' !== $add || '' !== $rem ) {

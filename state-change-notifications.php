@@ -30,9 +30,18 @@ function wpdr_state_change( $post_ID, $new_workflow_state, $old_workflow_state )
 		$email = $author->user_email;
 	}
 
-	// get the term name.
-	$new = ( '' === $new_workflow_state ? '' : get_term( $new_workflow_state, 'workflow_state' )->name );
-	$old = ( '' === $old_workflow_state ? '' : get_term( $old_workflow_state, 'workflow_state' )->name );
+	// get the term name with error checking.
+	$new = '';
+	if ( '' !== $new_workflow_state ) {
+		$new_term = get_term( $new_workflow_state, 'workflow_state' );
+		$new      = ( ! is_wp_error( $new_term ) && $new_term ) ? $new_term->name : '';
+	}
+
+	$old = '';
+	if ( '' !== $old_workflow_state ) {
+		$old_term = get_term( $old_workflow_state, 'workflow_state' );
+		$old      = ( ! is_wp_error( $old_term ) && $old_term ) ? $old_term->name : '';
+	}
 
 	// format message.
 	$subject = 'State Change for Document: ' . $post->post_title;
