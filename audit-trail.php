@@ -178,7 +178,7 @@ function wpdr_audit_metabox( $post ) {
 	foreach ( $trail as $event ) {
 		// Use cached user object if available.
 		if ( ! isset( $user_cache[ $event['user'] ] ) ) {
-			$user                          = get_user_by( 'id', $event['user'] );
+			$user                         = get_user_by( 'id', $event['user'] );
 			$user_cache[ $event['user'] ] = $user;
 		} else {
 			$user = $user_cache[ $event['user'] ];
