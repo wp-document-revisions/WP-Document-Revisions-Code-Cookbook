@@ -901,6 +901,14 @@ class WPDR_WPML_Support {
 	 * @return int
 	 */
 	private function get_original_translation( $post_id ) {
+		// Check cache first.
+		$cache_key = 'wpdr_wpml_orig_' . $post_id;
+		$orig_id   = wp_cache_get( $cache_key );
+
+		if ( false !== $orig_id ) {
+			return (int) $orig_id;
+		}
+
 		// look up WPML data.
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -920,9 +928,15 @@ class WPDR_WPML_Support {
 
 		if ( ! is_array( $tran ) ) {
 			// no translation data so it is the original.
-			return $post_id;
+			$orig_id = $post_id;
+		} else {
+			$orig_id = (int) $tran['orig'];
 		}
-		return (int) $tran['orig'];
+
+		// Cache the result.
+		wp_cache_set( $cache_key, $orig_id, '', ( WP_DEBUG ? 10 : 300 ) );
+
+		return $orig_id;
 	}
 
 	/**
@@ -979,6 +993,14 @@ class WPDR_WPML_Support {
 	 * @return int[]
 	 */
 	private function get_orig_translations( $orig_id ) {
+		// Check cache first.
+		$cache_key = 'wpdr_wpml_trans_' . $orig_id;
+		$trans     = wp_cache_get( $cache_key );
+
+		if ( false !== $trans ) {
+			return $trans;
+		}
+
 		// look up WPML data.
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -994,9 +1016,15 @@ class WPDR_WPML_Support {
 
 		if ( ! is_array( $tran ) ) {
 			// no translation data so it is the original.
-			return array();
+			$trans = array();
+		} else {
+			$trans = wp_list_pluck( $tran, 'element_id', 'language_code' );
 		}
-		return wp_list_pluck( $tran, 'element_id', 'language_code' );
+
+		// Cache the result.
+		wp_cache_set( $cache_key, $trans, '', ( WP_DEBUG ? 10 : 300 ) );
+
+		return $trans;
 	}
 
 	/**

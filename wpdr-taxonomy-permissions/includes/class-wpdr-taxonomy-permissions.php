@@ -175,13 +175,19 @@ class WPDR_Taxonomy_Permissions {
 	 * @return array $caps the modified set of capabilities for the role.
 	 */
 	public function default_caps_filter( $caps, $role ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
-		// get terms in the selected taxonomy.
-		$terms = get_terms(
-			array(
-				'taxonomy'   => $this->taxonomy,
-				'hide_empty' => false,
-			)
-		);
+		// get terms in the selected taxonomy with caching.
+		$cache_key = 'wpdr_tax_terms_' . $this->taxonomy;
+		$terms     = wp_cache_get( $cache_key );
+
+		if ( false === $terms ) {
+			$terms = get_terms(
+				array(
+					'taxonomy'   => $this->taxonomy,
+					'hide_empty' => false,
+				)
+			);
+			wp_cache_set( $cache_key, $terms, '', ( WP_DEBUG ? 10 : 300 ) );
+		}
 
 		// build out term specific caps.
 		foreach ( $caps as $cap => $grant ) {
@@ -371,13 +377,19 @@ class WPDR_Taxonomy_Permissions {
 			// get user capabilities.
 			$allcaps = $user->allcaps;
 
-			// get terms in the selected taxonomy.
-			$terms = get_terms(
-				array(
-					'taxonomy'   => $this->taxonomy,
-					'hide_empty' => false,
-				)
-			);
+			// get terms in the selected taxonomy with caching.
+			$cache_key = 'wpdr_tax_terms_' . $this->taxonomy;
+			$terms     = wp_cache_get( $cache_key );
+
+			if ( false === $terms ) {
+				$terms = get_terms(
+					array(
+						'taxonomy'   => $this->taxonomy,
+						'hide_empty' => false,
+					)
+				);
+				wp_cache_set( $cache_key, $terms, '', ( WP_DEBUG ? 10 : 300 ) );
+			}
 
 			// See any caps exist for user in term.
 			$user_terms = array();
@@ -497,6 +509,27 @@ class WPDR_Taxonomy_Permissions {
 
 		global $wpdr;
 
+		// Batch collect document IDs to fetch terms in a single query.
+		$document_ids = array();
+		foreach ( $results as $result ) {
+			if ( $wpdr->verify_post_type( $result ) ) {
+				$document_ids[] = $result->ID;
+			}
+		}
+
+		// Pre-fetch all terms for documents in one query.
+		$document_terms = array();
+		if ( ! empty( $document_ids ) ) {
+			foreach ( $document_ids as $doc_id ) {
+				$terms = get_the_terms( $doc_id, $this->taxonomy );
+				if ( ! empty( $terms ) && ! is_wp_error( $terms ) ) {
+					$document_terms[ $doc_id ] = $terms;
+				} else {
+					$document_terms[ $doc_id ] = array();
+				}
+			}
+		}
+
 		$match = false;
 		foreach ( $results as $key => $result ) {
 			// confirm a document.
@@ -511,8 +544,8 @@ class WPDR_Taxonomy_Permissions {
 				continue;
 			}
 
-			// get the document terms in the taxonomy.
-			$terms = get_the_terms( $result, $this->taxonomy );
+			// get the document terms in the taxonomy from pre-fetched data.
+			$terms = isset( $document_terms[ $result->ID ] ) ? $document_terms[ $result->ID ] : array();
 
 			// None on document, but allowed to access.
 			if ( empty( $terms ) && $no_terms ) {

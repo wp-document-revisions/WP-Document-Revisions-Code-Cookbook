@@ -44,9 +44,7 @@ function wpdr_get_downloads( $post_ID ) {
 		return array();
 	}
 
-	// sort by timestamp.
-	wpdr_sort( $downloads, 'timestamp' );
-
+	// Sorting removed - will be done once in wpdr_get_audit_trail().
 	return $downloads;
 }
 
@@ -105,9 +103,7 @@ function wpdr_get_uploads( $post_ID ) {
 		);
 	}
 
-	// sort by timestamp.
-	wpdr_sort( $uploads, 'timestamp' );
-
+	// Sorting removed - will be done once in wpdr_get_audit_trail().
 	return $uploads;
 }
 
@@ -168,6 +164,9 @@ function wpdr_audit_metabox( $post ) {
 	if ( 0 === count( $trail ) ) {
 		return;
 	}
+
+	// Cache user objects to avoid repeated get_user_by() calls.
+	$user_cache = array();
 	?>
 	<table width="100%">
 		<tr>
@@ -177,7 +176,14 @@ function wpdr_audit_metabox( $post ) {
 		</tr>
 	<?php
 	foreach ( $trail as $event ) {
-		$user = get_user_by( 'id', $event['user'] );
+		// Use cached user object if available.
+		if ( ! isset( $user_cache[ $event['user'] ] ) ) {
+			$user                         = get_user_by( 'id', $event['user'] );
+			$user_cache[ $event['user'] ] = $user;
+		} else {
+			$user = $user_cache[ $event['user'] ];
+		}
+
 		if ( is_object( $user ) ) {
 			$user_name = $user->display_name;
 		} else {
